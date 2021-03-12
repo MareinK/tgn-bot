@@ -1,10 +1,11 @@
 (ns tgn-bot.core
   (:require [clojure.edn :as edn]
             [clojure.core.async :refer [chan close!]]
-            [discljord.messaging :as discord-rest]
-            [discljord.connections :as discord-ws]
-            [discljord.formatting :refer [mention-user mention-channel]]
-            [discljord.events :refer [message-pump!]]))
+            [discljord.messaging :as messaging]
+            [discljord.connections :as connections]
+            [discljord.formatting :as formatting]
+            [discljord.events :refer [message-pump!]]
+            [clojure.string :as str]))
 
 (def state (atom nil))
 
@@ -12,43 +13,130 @@
 
 (def config (edn/read-string (slurp "config.edn")))
 
-(defmulti handle-event (fn [type _data] type))
+(defmulti handle-event (fn [type data] type))
+
+(defmulti handle-command (fn [command args data] command))
+
+(defn help-message []
+  (format
+    (get-in config [:messages :help])
+    (:command-prefix config)))
+
+(defmethod handle-command :help [command args {:keys [channel-id member]}]
+  (when (and
+          (= channel-id (get-in config [:channel-ids :introduction]))
+          (some #{(get-in config [:role-ids :acceptor])} (:roles member)))
+    (messaging/create-message! (:rest @state) channel-id :content (help-message))))
+
+(defn welcome-message [user]
+  (format
+    (get-in config [:messages :welcome])
+    (formatting/mention-user user)))
+
+(defn accepted-channel-message [acceptor accepted]
+  (format
+    (get-in config [:messages :accepted-channel])
+    (formatting/mention-user acceptor)
+    (formatting/mention-user accepted)))
+
+(defn accepted-private-message [has-messages]
+  (let [accepted-private (format
+                           (get-in config [:messages :accepted-private])
+                           (formatting/mention-channel (get-in config [:channel-ids :introduction]))
+                           (formatting/mention-channel (get-in config [:channel-ids :welcome])))
+        your-messages (when has-messages (get-in config [:messages :accepted-private-your-messages]))]
+    (str/join " " [accepted-private your-messages])))
+
+(defn get-all-channel-messages [channel-id]
+  (loop [messages []]
+    (let [new-messages (if (seq messages)
+                         @(messaging/get-channel-messages!
+                            (:rest @state)
+                            channel-id
+                            :limit 100
+                            :before (:id (last messages)))
+                         @(messaging/get-channel-messages!
+                            (:rest @state)
+                            channel-id
+                            :limit 100))]
+      (if (seq new-messages)
+        (recur (concat messages new-messages))
+        messages))))
+
+(defn relevant-message? [guild-id message]
+  (let [mentions-and-author (conj (:mentions message) (:author message))
+        users-roles (->> mentions-and-author
+                      (map :id)
+                      (map (fn [id] @(messaging/get-guild-member! (:rest @state) guild-id id)))
+                      (map :roles)
+                      (filter some?))]
+    (some #(not-any? #{(get-in config [:role-ids :accepted])} %) users-roles)))
+
+(defmethod handle-command :accept [command args {:keys [guild-id channel-id id author member mentions]}]
+  (messaging/delete-message! (:rest @state) channel-id id)
+  (when-let [mention (first mentions)]
+    (when (and
+            (= channel-id (get-in config [:channel-ids :introduction]))
+            (some #{(get-in config [:role-ids :acceptor])} (:roles member))
+            (not-any? #{(get-in config [:role-ids :accepted])} (get-in mention [:member :roles])))
+      (messaging/modify-guild-member!
+        (:rest @state)
+        guild-id
+        (:id mention)
+        :roles (conj (get-in mention [:member :roles]) (get-in config [:role-ids :accepted])))
+      (messaging/create-message! (:rest @state) (get-in config [:channel-ids :welcome]) :content (welcome-message mention))
+      (let [channel-messages (get-all-channel-messages (get-in config [:channel-ids :introduction]))
+            user-messages (filter #(= (get-in % [:author :id]) (:id mention)) channel-messages)]
+        (let [dm-channel @(messaging/create-dm! (:rest @state) (:id mention))
+              user-messages-message (str/join "\n\n" (map :content (reverse user-messages)))]
+          (messaging/create-message! (:rest @state) (:id dm-channel) :content (accepted-private-message (seq user-messages-message)))
+          (messaging/create-message! (:rest @state) (:id dm-channel) :content user-messages-message))
+        (let [irrelevant-messages (take-while #(not (relevant-message? guild-id %)) (reverse channel-messages))
+              message-ids-to-delete (map :id (concat user-messages irrelevant-messages))]
+          (messaging/bulk-delete-messages! (:rest @state) channel-id message-ids-to-delete)))
+      (messaging/create-message! (:rest @state) channel-id :content (accepted-channel-message author mention)))))
 
 (defn random-response [user]
-  (str (rand-nth (:responses config)) ", " (mention-user user) \!))
+  (str (rand-nth (:responses config)) ", " (formatting/mention-user user) \!))
+
+(def command-pattern (re-pattern (str (:command-prefix config) #"(\S+)\s*(.*)")))
 
 (defmethod handle-event :message-create
-  [_ {:keys [channel-id author mentions] :as _data}]
-  (when (some #{@bot-id} (map :id mentions))
-    (discord-rest/create-message! (:rest @state) channel-id :content (str (random-response author) " " channel-id))))
+  [_ {:keys [channel-id author content] :as data}]
+  #_(when (some #{@bot-id} (map :id mentions))
+      (messaging/create-message! (:rest @state) channel-id :content (str (random-response author) " " channel-id)))
+  (when-let [[_ command args] (re-matches command-pattern content)]
+    (handle-command (keyword command) args data)))
 
 (defn introduction-message [user]
-  (format (:introduction-message config) (mention-user user) (mention-channel (:introduction-channel-id config))))
+  (format
+    (get-in config [:messages :introduction])
+    (formatting/mention-user user)
+    (formatting/mention-channel (get-in config [:channel-ids :introduction]))))
 
 (defmethod handle-event :guild-member-add
-  [_ {:keys [user] :as _data}]
-  (println _data)
-  (discord-rest/create-message! (:rest @state) (:introduction-channel-id config) :content (introduction-message user)))
+  [_ {:keys [user] :as data}]
+  (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction]) :content (introduction-message user)))
 
 (defmethod handle-event :default [type data]
-  (println type data))
+  #_(println type data))
 
 (defn start-bot! [token & intents]
   (let [event-channel (chan 100)
-        gateway-connection (discord-ws/connect-bot! token event-channel :intents (set intents))
-        rest-connection (discord-rest/start-connection! token)]
-    {:events  event-channel
+        gateway-connection (connections/connect-bot! token event-channel :intents (set intents))
+        rest-connection (messaging/start-connection! token)]
+    {:events event-channel
      :gateway gateway-connection
-     :rest    rest-connection}))
+     :rest rest-connection}))
 
 (defn stop-bot! [{:keys [rest gateway events] :as _state}]
-  (discord-rest/stop-connection! rest)
-  (discord-ws/disconnect-bot! gateway)
+  (messaging/stop-connection! rest)
+  (connections/disconnect-bot! gateway)
   (close! events))
 
 (defn -main [& args]
   (reset! state (start-bot! (slurp "token") :guild-members :guild-messages :direct-messages))
-  (reset! bot-id (:id @(discord-rest/get-current-user! (:rest @state))))
+  (reset! bot-id (:id @(messaging/get-current-user! (:rest @state))))
   (try
     (message-pump! (:events @state) handle-event)
     (finally (stop-bot! @state))))
