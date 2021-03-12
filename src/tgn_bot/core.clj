@@ -3,7 +3,7 @@
             [clojure.core.async :refer [chan close!]]
             [discljord.messaging :as discord-rest]
             [discljord.connections :as discord-ws]
-            [discljord.formatting :refer [mention-user]]
+            [discljord.formatting :refer [mention-user mention-channel]]
             [discljord.events :refer [message-pump!]]))
 
 (def state (atom nil))
@@ -23,7 +23,7 @@
     (discord-rest/create-message! (:rest @state) channel-id :content (str (random-response author) " " channel-id))))
 
 (defn introduction-message [user]
-  (format (:introduction-message config) (mention-user user)))
+  (format (:introduction-message config) (mention-user user) (mention-channel (:introduction-channel-id config))))
 
 (defmethod handle-event :guild-member-add
   [_ {:keys [user] :as _data}]
