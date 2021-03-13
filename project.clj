@@ -8,6 +8,9 @@
                                                     javax.jms/jms
                                                     com.sun.jmdk/jmxtools
                                                     com.sun.jmx/jmxri]]
+                 [ring/ring-core "1.9.1"]
+                 [ring/ring-jetty-adapter "1.9.1"]
+                 [ring/ring-servlet "1.9.1"]
                  [org.suskalo/discljord "1.2.2"]]
   :main tgn-bot.core
-  :min-lein-version "2.9.5")
+  :min-lein-version "2.0.0")
