@@ -154,7 +154,7 @@
   (println "starting bot...")
   (reset! state (start-bot! (System/getenv "DISCORD_BOT_TOKEN") :guild-members :guild-messages :direct-messages))
   (println "started bot, setting bot id...")
-  (reset! bot-id (:id @(messaging/get-current-user! (:rest @state))))
+  ;(reset! bot-id (:id @(messaging/get-current-user! (:rest @state))))
   (println "set bot id, starting message pump...")
   (try
     (message-pump! (:events @state) handle-event)
