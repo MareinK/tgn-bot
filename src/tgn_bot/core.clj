@@ -92,7 +92,7 @@
           (messaging/create-message! (:rest @state) (:id dm-channel) :content (accepted-private-message (seq user-messages-message)))
           (messaging/create-message! (:rest @state) (:id dm-channel) :content user-messages-message))
         (let [irrelevant-messages (take-while #(not (relevant-message? guild-id %)) (reverse channel-messages))
-              message-ids-to-delete (map :id (concat user-messages irrelevant-messages))]
+              message-ids-to-delete (map :id (set (concat user-messages irrelevant-messages)))]
           (messaging/bulk-delete-messages! (:rest @state) channel-id message-ids-to-delete)))
       (messaging/create-message! (:rest @state) channel-id :content (accepted-channel-message author mention)))))
 
