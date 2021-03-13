@@ -38,7 +38,7 @@
   (format
     (get-in config [:messages :accepted-channel])
     (formatting/mention-user acceptor)
-    (formatting/mention-user accepted)))
+    (:username accepted)))
 
 (defn accepted-private-message [has-messages]
   (let [accepted-private (format
