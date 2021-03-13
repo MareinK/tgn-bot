@@ -63,14 +63,21 @@
         (recur (concat messages new-messages))
         messages))))
 
-(defn relevant-message? [guild-id message]
-  (let [mentions-and-author (conj (:mentions message) (:author message))
-        users-roles (->> mentions-and-author
-                      (map :id)
-                      (map (fn [id] @(messaging/get-guild-member! (:rest @state) guild-id id)))
+(defn message-author-and-mentions-ids [message]
+  (map :id (conj (:mentions message) (:author message))))
+
+(defn relevant-message? [id->user message]
+  (let [users-roles (->> (message-author-and-mentions-ids message)
+                      (map id->user)
                       (map :roles)
                       (filter some?))]
     (some #(not-any? #{(get-in config [:role-ids :accepted])} %) users-roles)))
+
+(defn irrelevant-messages [guild-id messages]
+  (let [messages-user-ids (map message-author-and-mentions-ids messages)
+        unique-user-ids (set (apply concat messages-user-ids))
+        id->user (into {} (for [id unique-user-ids] [id @(messaging/get-guild-member! (:rest @state) guild-id id)]))]
+    (take-while #(not (relevant-message? id->user %)) (reverse messages))))
 
 (defmethod handle-command :accept [command args {:keys [guild-id channel-id id author member mentions]}]
   (messaging/delete-message! (:rest @state) channel-id id)
@@ -91,8 +98,8 @@
               user-messages-message (str/join "\n\n" (map :content (reverse user-messages)))]
           (messaging/create-message! (:rest @state) (:id dm-channel) :content (accepted-private-message (seq user-messages-message)))
           (messaging/create-message! (:rest @state) (:id dm-channel) :content user-messages-message))
-        (let [irrelevant-messages (take-while #(not (relevant-message? guild-id %)) (reverse channel-messages))
-              message-ids-to-delete (map :id (set (concat user-messages irrelevant-messages)))]
+        (let [messages-to-delete (set (concat user-messages (irrelevant-messages guild-id channel-messages)))
+              message-ids-to-delete (map :id messages-to-delete)]
           (messaging/bulk-delete-messages! (:rest @state) channel-id message-ids-to-delete)))
       (messaging/create-message! (:rest @state) channel-id :content (accepted-channel-message author mention)))))
 
