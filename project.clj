@@ -12,4 +12,5 @@
                  [ring/ring-core "1.8.1"]
                  [ring/ring-jetty-adapter "1.8.1"]]
   :repl-options {:init-ns tgn-bot.core}
-  :main tgn-bot.core)
+  :main tgn-bot.core
+  :profiles {:uberjar {:aot :all}})
