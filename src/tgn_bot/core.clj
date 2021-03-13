@@ -151,7 +151,7 @@
 
 (defn -main [& args]
   (serve (Long/parseLong (System/getenv "PORT")))
-  (reset! state (start-bot! (str/trim (slurp "token")) :guild-members :guild-messages :direct-messages))
+  (reset! state (start-bot! (System/getenv "DISCORD_BOT_TOKEN") :guild-members :guild-messages :direct-messages))
   (reset! bot-id (:id @(messaging/get-current-user! (:rest @state))))
   (try
     (message-pump! (:events @state) handle-event)
