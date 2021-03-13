@@ -1,2 +1,2 @@
-web: java $JVM_OPTS -cp target/helloworld-standalone.jar clojure.main -m helloworld.web
+web: java $JVM_OPTS -cp target/tgn-bot.jar clojure.main -m tgn-bot.web
 

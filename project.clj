@@ -11,5 +11,6 @@
                  [org.suskalo/discljord "1.2.2"]]
   :repl-options {:init-ns tgn-bot.core}
   :main tgn-bot.core
+  :uberjar-name "tgn-bot.jar"
   :profiles {:uberjar {:aot :all}}
   :min-lein-version "2.9.5")
