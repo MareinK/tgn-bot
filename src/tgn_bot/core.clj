@@ -1,11 +1,12 @@
 (ns tgn-bot.core
   (:require [clojure.edn :as edn]
+            [clojure.string :as str]
             [clojure.core.async :refer [chan close!]]
             [discljord.messaging :as messaging]
             [discljord.connections :as connections]
             [discljord.formatting :as formatting]
             [discljord.events :refer [message-pump!]]
-            [clojure.string :as str]))
+            [ring.adapter.jetty :refer [run-jetty]]))
 
 (def state (atom nil))
 
@@ -141,7 +142,15 @@
   (connections/disconnect-bot! gateway)
   (close! events))
 
+(defn serve [port]
+  (run-jetty
+    (constantly {:status 200})
+    {:host "0.0.0.0"
+     :port port
+     :join? false}))
+
 (defn -main [& args]
+  (serve (Long/parseLong (System/getenv "PORT")))
   (reset! state (start-bot! (slurp "token") :guild-members :guild-messages :direct-messages))
   (reset! bot-id (:id @(messaging/get-current-user! (:rest @state))))
   (try
