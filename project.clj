@@ -8,9 +8,7 @@
                                                     javax.jms/jms
                                                     com.sun.jmdk/jmxtools
                                                     com.sun.jmx/jmxri]]
-                 [org.suskalo/discljord "1.2.2"]
-                 [ring/ring-core "1.8.1"]
-                 [ring/ring-jetty-adapter "1.8.1"]]
+                 [org.suskalo/discljord "1.2.2"]]
   :repl-options {:init-ns tgn-bot.core}
   :main tgn-bot.core
   :profiles {:uberjar {:aot :all}})

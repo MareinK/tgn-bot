@@ -5,8 +5,7 @@
             [discljord.messaging :as messaging]
             [discljord.connections :as connections]
             [discljord.formatting :as formatting]
-            [discljord.events :refer [message-pump!]]
-            [ring.adapter.jetty :refer [run-jetty]]))
+            [discljord.events :refer [message-pump!]]))
 
 (def state (atom nil))
 
@@ -145,15 +144,7 @@
   (connections/disconnect-bot! gateway)
   (close! events))
 
-(defn serve [port]
-  (run-jetty
-    (constantly {:status 200})
-    {:host "0.0.0.0"
-     :port port
-     :join? false}))
-
 (defn -main [& args]
-  (serve (Long/parseLong (System/getenv "PORT")))
   (reset! state (start-bot! (System/getenv "DISCORD_BOT_TOKEN") :guild-members :guild-messages :direct-messages))
   (reset! bot-id (:id @(messaging/get-current-user! (:rest @state))))
   (try
