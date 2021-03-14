@@ -24,10 +24,10 @@
 
 (defn serve [port]
   (run-jetty
-   (constantly {:status 200})
-   {:host "0.0.0.0"
-    :port port
-    :join? false}))
+    (constantly {:status 200})
+    {:host "0.0.0.0"
+     :port port
+     :join? false}))
 
 (defn -main [& args]
   (let [port (System/getenv "PORT")

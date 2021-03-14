@@ -3,7 +3,8 @@
             [tgn-bot.util :refer [get-all-channel-messages]]
             [discljord.messaging :as messaging]
             [discljord.formatting :as formatting]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            java-time))
 
 (defn welcome-message [user]
   (format
@@ -57,3 +58,33 @@
     (messaging/create-message! (:rest @state) (:id dm-channel) :content user-messages-message)
     (messaging/bulk-delete-messages! (:rest @state) (get-in config [:channel-ids :introduction]) message-ids-to-delete)
     (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction]) :content (accepted-channel-message acceptor accepted))))
+
+(defn remind-silent-users-message [users]
+  (format
+    (get-in config [:messages :intro-reminder])
+    (->> users
+      (map :id)
+      (map formatting/mention-user)
+      (str/join " "))))
+
+(defn remind-silent-users []
+  (let [users (->>
+                (get-all-channel-messages (get-in config [:channel-ids :introduction]))
+                (group-by :author)
+                (vals)
+                (map first)
+                (map #(assoc % :member (->> (get-in % [:author :id])
+                                         (messaging/get-guild-member! (:rest @state) (get-in config [:guild-id]))
+                                         (deref))))
+                (filter #(not-any? #{(get-in config [:role-ids :accepted])} (get-in % [:member :roles])))
+                (filter #(-> %
+                           (:timestamp)
+                           (java-time/instant)
+                           (java-time/time-between (java-time/instant) :minutes)
+                           (>= 7)))
+                (map :author)
+                (set))]
+    (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction]) :content (remind-silent-users-message users))))
+
+(defn kick-old-users []
+  (let [channel-messages (get-all-channel-messages (get-in config [:channel-ids :introduction]))]))
