@@ -15,7 +15,10 @@
 
 (def bot-id (atom nil))
 
-(def config (edn/read-string (slurp "config.edn")))
+(def config
+  (merge
+    (edn/read-string (slurp "config.edn"))
+    (edn/read-string (System/getenv "DISCORD_SERVER_CONFIG"))))
 
 (defmulti handle-event (fn [type data] type))
 
@@ -199,8 +202,9 @@
 
 (defn -main [& args]
   (let [port (System/getenv "PORT")
-        discord-bot-token (System/getenv "DISCORD_BOT_TOKEN")]
-    (if (and port discord-bot-token)
+        discord-bot-token (System/getenv "DISCORD_BOT_TOKEN")
+        discord-server-config (System/getenv "DISCORD_SERVER_CONFIG")]
+    (if (and port discord-bot-token discord-server-config)
       (do
         (serve (Long/parseLong port))
         (schedule-tasks)

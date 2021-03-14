@@ -1,8 +1,4 @@
-{:channel-ids {:introduction "819961158895009796"
-               :welcome "820028105312698388"}
- :role-ids {:acceptor "820027220797816883"
-            :accepted "820027321976356944"}
- :command-prefix "!"
+{:command-prefix "!"
  :messages {:introduction "Welkom %s, leuk dat je er bent! Je zit momenteel in het gelimiteerde %s kanaal. Wil je jezelf kort voorstellen en je link met transgender beschrijven? Dan geeft een moderator je zo snel mogelijk toegang tot de server."
             :welcome "Welkom %s!"
             :accepted-channel "%s heeft toegang gegeven aan %s."
