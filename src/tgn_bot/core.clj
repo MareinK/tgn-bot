@@ -6,7 +6,9 @@
             [discljord.connections :as connections]
             [discljord.formatting :as formatting]
             [discljord.events :refer [message-pump!]]
-            [ring.adapter.jetty :refer [run-jetty]]))
+            [ring.adapter.jetty :refer [run-jetty]]
+            [chime.core :as chime]))
+(import '[java.time Instant Duration])
 
 (def state (atom nil))
 
@@ -154,6 +156,9 @@
 
 (defn -main [& args]
   (serve (Long/parseLong (System/getenv "PORT")))
+  (chime/chime-at
+    (chime/periodic-seq (Instant/now) (Duration/ofMinutes 15))
+    (fn [time] (println "Keep alive...")))
   (reset! state (start-bot! (System/getenv "DISCORD_BOT_TOKEN") :guild-members :guild-messages :direct-messages))
   (reset! bot-id (:id @(messaging/get-current-user! (:rest @state))))
   (try
