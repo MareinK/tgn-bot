@@ -198,10 +198,15 @@
     monthly-tasks))
 
 (defn -main [& args]
-  (serve (Long/parseLong (System/getenv "PORT")))
-  (schedule-tasks)
-  (reset! state (start-bot! (System/getenv "DISCORD_BOT_TOKEN") :guild-members :guild-messages :direct-messages))
-  (reset! bot-id (:id @(messaging/get-current-user! (:rest @state))))
-  (try
-    (message-pump! (:events @state) handle-event)
-    (finally (stop-bot! @state))))
+  (let [port (System/getenv "PORT")
+        discord-bot-token (System/getenv "DISCORD_BOT_TOKEN")]
+    (if (and port discord-bot-token)
+      (do
+        (serve (Long/parseLong port))
+        (schedule-tasks)
+        (reset! state (start-bot! discord-bot-token :guild-members :guild-messages :direct-messages))
+        (reset! bot-id (:id @(messaging/get-current-user! (:rest @state))))
+        (try
+          (message-pump! (:events @state) handle-event)
+          (finally (stop-bot! @state))))
+      (throw (ex-info "Not all environment variables are set." {})))))
