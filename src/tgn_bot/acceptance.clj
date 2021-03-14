@@ -5,22 +5,6 @@
             [discljord.formatting :as formatting]
             [clojure.string :as str]))
 
-(defn message-author-and-mentions-ids [message]
-  (map :id (conj (:mentions message) (:author message))))
-
-(defn relevant-message? [id->user message]
-  (let [users-roles (->> (message-author-and-mentions-ids message)
-                      (map id->user)
-                      (map :roles)
-                      (filter some?))]
-    (some #(not-any? #{(get-in config [:role-ids :accepted])} %) users-roles)))
-
-(defn irrelevant-messages [guild-id messages]
-  (let [messages-user-ids (map message-author-and-mentions-ids messages)
-        unique-user-ids (set (apply concat messages-user-ids))
-        id->user (into {} (for [id unique-user-ids] [id @(messaging/get-guild-member! (:rest @state) guild-id id)]))]
-    (take-while #(not (relevant-message? id->user %)) (reverse messages))))
-
 (defn welcome-message [user]
   (format
     (get-in config [:messages :welcome])
