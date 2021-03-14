@@ -14,5 +14,5 @@
                  [ring/ring-servlet "1.9.1"]
                  [jarohen/chime "0.3.2"]
                  [org.suskalo/discljord "1.2.2"]]
-  :main tgn-bot.core
+  :main tgn-bot.main
   :min-lein-version "2.0.0")

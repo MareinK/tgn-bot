@@ -4,8 +4,8 @@
             :accepted-channel "%s heeft toegang gegeven aan %s."
             :accepted-private "Bedankt voor je bericht in het %s kanaal! Een moderator heeft je toegang gegeven tot de server. Als je wilt, kun je jezelf nog aan iedereen voorstellen in het %s kanaal."
             :accepted-private-your-messages "Hier zijn de berichten die je gestuurd hebt, als je ze soms wilt herhalen:"
-            :intro-reminder ""
-            :kick-reason ""
-            :kicked-channel ""
+            :intro-reminder "%s Leuk dat je er bent! Zou je jezelf kort willen voorstellen? Dan krijg je toegang tot de server."
+            :kick-reason "Je hebt jezelf niet voorgesteld en/of bent niet toegelaten tot de server."
+            :kicked-channel "%s was te lang stil en is van de server verwijderd."
             :help "Gebruik `%saccept @username` om nieuwe gebruikers toegang te geven tot de server."}
  :responses ["Hallo daar" "Goededag" "Hoi" "Hee" "Howdy :cowboy:"]}
