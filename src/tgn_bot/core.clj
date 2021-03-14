@@ -7,8 +7,9 @@
             [discljord.formatting :as formatting]
             [discljord.events :refer [message-pump!]]
             [ring.adapter.jetty :refer [run-jetty]]
-            [chime.core :as chime]))
-(import '[java.time Instant Duration])
+            [chime.core :as chime]
+            [clojure.tools.logging :as log]))
+(import '[java.time Instant Duration LocalTime ZonedDateTime ZoneId Period])
 
 (def state (atom nil))
 
@@ -154,11 +155,48 @@
      :port port
      :join? false}))
 
+#_(defn keep-alive-task [time]
+    (log/info "Sending keep-alive message."))
+
+(defn daily-tasks [time]
+  (log/info "Executing daily tasks.")
+  #_(do
+      (purge-introduction-channel)
+      (daily-event-reminder)))
+
+(defn monthly-tasks [time]
+  (log/info "Executing monthly tasks.")
+  #_(monthly-event-reminder))
+
+(def standard-task-execution-time
+  (->
+    (LocalTime/of 9 0)
+    (.adjustInto (ZonedDateTime/now (ZoneId/of "Europe/Amsterdam")))
+    .toInstant))
+
+(defn schedule-tasks []
+  #_(chime/chime-at
+      (chime/periodic-seq
+        (Instant/now)
+        (Duration/ofMinutes 10))
+      keep-alive-task)
+  (chime/chime-at
+    (chime/periodic-seq
+      standard-task-execution-time
+      (Period/ofDays 1))
+    daily-tasks)
+  (chime/chime-at
+    (->>
+      (chime/periodic-seq
+        standard-task-execution-time
+        (Period/ofDays 1))
+      (partition-by #(.getMonth (.atZone % (ZoneId/of "Europe/Amsterdam"))))
+      (map last))
+    monthly-tasks))
+
 (defn -main [& args]
   (serve (Long/parseLong (System/getenv "PORT")))
-  (chime/chime-at
-    (chime/periodic-seq (Instant/now) (Duration/ofMinutes 15))
-    (fn [time] (println "Keep alive...")))
+  (schedule-tasks)
   (reset! state (start-bot! (System/getenv "DISCORD_BOT_TOKEN") :guild-members :guild-messages :direct-messages))
   (reset! bot-id (:id @(messaging/get-current-user! (:rest @state))))
   (try
