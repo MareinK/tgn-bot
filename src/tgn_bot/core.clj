@@ -2,6 +2,7 @@
   (:require [clojure.edn :as edn]
             [clojure.string :as str]
             [clojure.core.async :refer [chan close!]]
+            java-time
             [discljord.messaging :as messaging]
             [discljord.connections :as connections]
             [discljord.formatting :as formatting]
@@ -9,7 +10,6 @@
             [ring.adapter.jetty :refer [run-jetty]]
             [chime.core :as chime]
             [clojure.tools.logging :as log]))
-(import '[java.time Instant Duration LocalTime ZonedDateTime ZoneId Period])
 
 (def state (atom nil))
 
@@ -170,9 +170,9 @@
 
 (def standard-task-execution-time
   (->
-    (LocalTime/of 9 0)
-    (.adjustInto (ZonedDateTime/now (ZoneId/of "Europe/Amsterdam")))
-    .toInstant))
+    (java-time/local-time 9 0)
+    (java-time/zoned-date-time (java-time/zone-id "Europe/Amsterdam"))
+    java-time/instant))
 
 (defn schedule-tasks []
   #_(chime/chime-at
@@ -181,17 +181,20 @@
         (Duration/ofMinutes 10))
       keep-alive-task)
   (chime/chime-at
-    (chime/periodic-seq
-      standard-task-execution-time
-      (Period/ofDays 1))
+    (->>
+      (chime/periodic-seq
+        standard-task-execution-time
+        (java-time/period 1 :days))
+      (filter #(java-time/after? % (java-time/instant))))
     daily-tasks)
   (chime/chime-at
     (->>
       (chime/periodic-seq
         standard-task-execution-time
-        (Period/ofDays 1))
-      (partition-by #(.getMonth (.atZone % (ZoneId/of "Europe/Amsterdam"))))
-      (map last))
+        (java-time/period 1 :days))
+      (partition-by #(java-time/month (java-time/local-date % "Europe/Amsterdam")))
+      (map last)
+      (filter #(java-time/after? % (java-time/instant))))
     monthly-tasks))
 
 (defn -main [& args]
