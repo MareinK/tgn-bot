@@ -119,9 +119,9 @@
 (def command-pattern (re-pattern (str (:command-prefix config) #"(\S+)\s*(.*)")))
 
 (defmethod handle-event :message-create
-  [_ {:keys [channel-id author content] :as data}]
-  #_(when (some #{@bot-id} (map :id mentions))
-      (messaging/create-message! (:rest @state) channel-id :content (str (random-response author) " " channel-id)))
+  [_ {:keys [channel-id author content mentions] :as data}]
+  (when (some #{@bot-id} (map :id mentions))
+      (messaging/create-message! (:rest @state) channel-id :content (str (random-response author) " ")))
   (when-let [[_ command args] (re-matches command-pattern content)]
     (handle-command (keyword command) args data)))
 

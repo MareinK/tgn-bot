@@ -8,4 +8,4 @@
             :kick-reason ""
             :kicked-channel ""
             :help "Gebruik `%saccept @username` om nieuwe gebruikers toegang te geven tot de server."}
- :responses ["Hello there" "Good evening" "Good morning" "G'day" "Hi" "Howdy :cowboy:"]}
+ :responses ["Hallo daar" "Goededag" "Hoi" "Hee" "Howdy :cowboy:"]}
