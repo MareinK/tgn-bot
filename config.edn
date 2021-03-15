@@ -8,4 +8,6 @@
             :kick-reason "Je hebt jezelf niet voorgesteld en/of bent niet toegelaten tot de server."
             :kicked-channel "%s was te lang stil en is van de server verwijderd."
             :help "Gebruik `%saccept @username` om nieuwe gebruikers toegang te geven tot de server."}
- :responses ["Hallo daar" "Goededag" "Hoi" "Hee" "Howdy :cowboy:"]}
+ :responses ["Hallo daar" "Goededag" "Hoi" "Hee" "Howdy :cowboy:"]
+ :introduction-reminder-days 7
+ :introduction-kick-days 14}
