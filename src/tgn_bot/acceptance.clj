@@ -1,6 +1,6 @@
 (ns tgn-bot.acceptance
   (:require [tgn-bot.core :refer [state config]]
-            [tgn-bot.util :refer [get-all-channel-messages]]
+            [tgn-bot.util :refer [get-all-channel-messages delete-messages!]]
             [discljord.messaging :as messaging]
             [discljord.formatting :as formatting]
             [clojure.string :as str]
@@ -51,12 +51,13 @@
         user-messages (filter #(= (get-in % [:author :id]) (:id accepted)) channel-messages)
         dm-channel @(messaging/create-dm! (:rest @state) (:id accepted))
         user-messages-message (str/join "\n\n" (map :content (reverse user-messages)))
-        messages-to-delete (set (concat user-messages (irrelevant-messages guild-id channel-messages)))
+        messages-to-delete (concat user-messages (irrelevant-messages guild-id channel-messages))
         message-ids-to-delete (map :id messages-to-delete)]
     (messaging/create-message! (:rest @state) (get-in config [:channel-ids :welcome]) :content (welcome-message accepted))
     (messaging/create-message! (:rest @state) (:id dm-channel) :content (accepted-private-message (seq user-messages-message)))
     (messaging/create-message! (:rest @state) (:id dm-channel) :content user-messages-message)
-    (messaging/bulk-delete-messages! (:rest @state) (get-in config [:channel-ids :introduction]) message-ids-to-delete)
+    ;(messaging/bulk-delete-messages! (:rest @state) (get-in config [:channel-ids :introduction]) message-ids-to-delete)
+    (delete-messages! (get-in config [:channel-ids :introduction]) messages-to-delete)
     (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction]) :content (accepted-channel-message acceptor accepted))))
 
 (defn remind-silent-users-message [users]
@@ -67,6 +68,7 @@
       (map formatting/mention-user)
       (str/join " "))))
 
+; TODO: we have to get the channel members instead of the message authors
 (defn remind-silent-users []
   (let [users (->>
                 (get-all-channel-messages (get-in config [:channel-ids :introduction]))
