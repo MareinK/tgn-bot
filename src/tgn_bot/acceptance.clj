@@ -80,8 +80,8 @@
                 (filter #(-> %
                            (:timestamp)
                            (java-time/instant)
-                           (java-time/time-between (java-time/instant) :minutes)
-                           (>= 7)))
+                           (java-time/time-between (java-time/instant) :days)
+                           (= 7)))
                 (map :author)
                 (set))]
     (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction]) :content (remind-silent-users-message users))))
