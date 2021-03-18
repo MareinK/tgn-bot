@@ -6,6 +6,9 @@
             [clojure.string :as str]
             java-time))
 
+(defn member-accepted? [member]
+  (some #{(get-in config [:role-ids :accepted])} (:roles member)))
+
 (defn welcome-message [user]
   (format
     (get-in config [:messages :welcome])
@@ -22,18 +25,23 @@
 (defn message-author-and-mentions-ids [message]
   (map :id (conj (:mentions message) (:author message))))
 
-(defn relevant-message? [id->user message]
+(defn relevant-message? [id->member message]
   (let [users-roles (->> (message-author-and-mentions-ids message)
-                      (map id->user)
+                      (map id->member)
                       (map :roles)
                       (filter some?))]
     (some #(not-any? #{(get-in config [:role-ids :accepted])} %) users-roles)))
 
+(defn construct-id->member [guild-id user-ids]
+  (apply merge
+    (for [user-id user-ids]
+      {user-id @(messaging/get-guild-member! (:rest @state) guild-id user-id)})))
+
 (defn irrelevant-messages [guild-id messages]
   (let [messages-user-ids (map message-author-and-mentions-ids messages)
         unique-user-ids (set (apply concat messages-user-ids))
-        id->user (into {} (for [id unique-user-ids] [id @(messaging/get-guild-member! (:rest @state) guild-id id)]))]
-    (take-while #(not (relevant-message? id->user %)) (reverse messages))))
+        id->member (construct-id->member guild-id unique-user-ids)]
+    (take-while #(not (relevant-message? id->member %)) (reverse messages))))
 
 (defn accepted-channel-message [acceptor accepted]
   (format
@@ -68,25 +76,57 @@
       (map formatting/mention-user)
       (str/join " "))))
 
-; TODO: we have to get the channel members instead of the message authors
-(defn remind-silent-users []
-  (let [users (->>
-                (get-all-channel-messages (get-in config [:channel-ids :introduction]))
-                (group-by :author)
-                (vals)
-                (map first)
-                (map #(assoc % :member (->> (get-in % [:author :id])
-                                         (messaging/get-guild-member! (:rest @state) (get-in config [:guild-id]))
-                                         (deref))))
-                (filter #(not-any? #{(get-in config [:role-ids :accepted])} (get-in % [:member :roles])))
-                (filter #(-> %
-                           (:timestamp)
-                           (java-time/instant)
-                           (java-time/time-between (java-time/instant) :days)
-                           (= (:introduction-reminder-days config))))
-                (map :author)
-                (set))]
-    (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction]) :content (remind-silent-users-message users))))
+(defn kick-silent-users-message [users]
+  (format
+    (get-in config [:messages :kicked-channel])
+    (->> users
+      (map :id)
+      (map formatting/mention-user)
+      (str/join " "))))
 
-(defn kick-old-users []
-  (let [channel-messages (get-all-channel-messages (get-in config [:channel-ids :introduction]))]))
+(defn unaccepted-guild-members []
+  (->> @(messaging/list-guild-members! (:rest @state) (:guild-id config) :limit 1000)
+    (remove member-accepted?)))
+
+(defn message->user-timestamps [message]
+  (apply merge
+    (for [id (message-author-and-mentions-ids message)]
+      {id (java-time/instant (:timestamp message))})))
+
+(defn user-id->max-timestamp []
+  (let [messages (get-all-channel-messages (get-in config [:channel-ids :introduction]))
+        author-timestamps (for [message messages]
+                            {(get-in message [:author :id]) (java-time/instant (:timestamp message))})
+        max-author-timestamps (apply merge-with java-time/max author-timestamps)]
+    max-author-timestamps))
+
+(defn users-silent-for-n-days [days]
+  (let [max-timestamps (user-id->max-timestamp)]
+    (->>
+      (unaccepted-guild-members)
+      (filter
+        (fn [member]
+          (-> (or
+                (max-timestamps (get-in member [:user :id]))
+                (java-time/instant (:joined-at member)))
+            (java-time/time-between (java-time/instant) :days)
+            (= days))))
+      (map :user))))
+
+(defn remind-silent-users []
+  (let [silent-users (users-silent-for-n-days (:introduction-reminder-days config))]
+    (when (seq silent-users)
+      (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction])
+        :content (remind-silent-users-message silent-users)))))
+
+(defn kick-silent-users []
+  (let [silent-users (users-silent-for-n-days (:introduction-kick-days config))]
+    (when (seq silent-users)
+      (if (<= (count silent-users) 3)
+        (do
+          (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction])
+            :content (kick-silent-users-message silent-users))
+          (for [user silent-users]
+              (messaging/remove-guild-member! (:rest @state) (:guild-id config) (:id user))))
+        (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction])
+          :content (get-in config [:messages :too-many-to-kick]))))))

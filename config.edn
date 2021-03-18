@@ -7,7 +7,8 @@
             :intro-reminder "%s Leuk dat je er bent! Zou je jezelf kort willen voorstellen? Dan krijg je toegang tot de server."
             :kick-reason "Je hebt jezelf niet voorgesteld en/of bent niet toegelaten tot de server."
             :kicked-channel "%s was te lang stil en is van de server verwijderd."
-            :help "Gebruik `%saccept @username` om nieuwe gebruikers toegang te geven tot de server."}
+            :help "Gebruik `%saccept @username` om nieuwe gebruikers toegang te geven tot de server."
+            :too-many-to-kick "Ohjee! Ik wilde een hoop mensen tegelijk kicken, dus dat heb ik toch maar niet gedaan."}
  :responses ["Hallo daar" "Goededag" "Hoi" "Hee" "Howdy :cowboy:"]
  :introduction-reminder-days 7
  :introduction-kick-days 14}

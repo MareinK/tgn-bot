@@ -16,7 +16,7 @@
 (defn daily-tasks [time]
   (log/info "Executing daily tasks.")
   (acceptance/remind-silent-users)
-  (acceptance/kick-old-users)
+  (acceptance/kick-silent-users)
   #_(daily-event-reminder))
 
 (defn monthly-tasks [time]
@@ -34,14 +34,14 @@
       (chime/periodic-seq
         standard-task-execution-time
         (java-time/period 1 :days))
-      (filter #(java-time/after? % (java-time/instant))))
+      (chime/without-past-times))
     daily-tasks)
   (chime/chime-at
     (->>
       (chime/periodic-seq
         standard-task-execution-time
         (java-time/period 1 :days))
+      (chime/without-past-times)
       (partition-by #(java-time/month (java-time/local-date % "Europe/Amsterdam")))
-      (map last)
-      (filter #(java-time/after? % (java-time/instant))))
+      (map last))
     monthly-tasks))
