@@ -1,5 +1,6 @@
 (ns tgn-bot.main
   (:require [tgn-bot.core :refer [state config bot-id]]
+            [tgn-bot.util :refer [get-all-channel-messages delete-messages!]]
             [tgn-bot.events :refer [handle-event]]
             [tgn-bot.scheduling :refer [schedule-tasks]]
             [discljord.messaging :as messaging]
@@ -43,3 +44,8 @@
           (message-pump! (:events @state) handle-event)
           (finally (stop-bot! @state))))
       (throw (ex-info "Not all environment variables are set." {})))))
+
+
+(comment
+  (reset! state (start-bot! (System/getenv "DISCORD_BOT_TOKEN") :guild-members :guild-messages :direct-messages))
+  (tgn-bot.util/delete-messages! (get-in config [:channel-ids :introduction]) (tgn-bot.acceptance/irrelevant-messages (:guild-id config) (get-all-channel-messages (get-in config [:channel-ids :introduction])))))

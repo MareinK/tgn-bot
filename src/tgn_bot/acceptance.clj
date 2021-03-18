@@ -47,7 +47,7 @@
   (format
     (get-in config [:messages :accepted-channel])
     (formatting/mention-user acceptor)
-    (:username accepted)))
+    (formatting/mention-user accepted)))
 
 (defn accept [acceptor accepted guild-id]
   (messaging/modify-guild-member!
@@ -59,14 +59,15 @@
         user-messages (filter #(= (get-in % [:author :id]) (:id accepted)) channel-messages)
         dm-channel @(messaging/create-dm! (:rest @state) (:id accepted))
         user-messages-message (str/join "\n\n" (map :content (reverse user-messages)))
-        messages-to-delete (concat user-messages (irrelevant-messages guild-id channel-messages))
-        message-ids-to-delete (map :id messages-to-delete)]
+        messages-to-delete (concat user-messages (irrelevant-messages guild-id channel-messages))]
     (messaging/create-message! (:rest @state) (get-in config [:channel-ids :welcome]) :content (welcome-message accepted))
     (messaging/create-message! (:rest @state) (:id dm-channel) :content (accepted-private-message (seq user-messages-message)))
     (messaging/create-message! (:rest @state) (:id dm-channel) :content user-messages-message)
-    ;(messaging/bulk-delete-messages! (:rest @state) (get-in config [:channel-ids :introduction]) message-ids-to-delete)
     (delete-messages! (get-in config [:channel-ids :introduction]) messages-to-delete)
     (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction]) :content (accepted-channel-message acceptor accepted))))
+
+(comment
+  (irrelevant-messages (:guild-id config) (get-all-channel-messages (get-in config [:channel-ids :introduction]))))
 
 (defn remind-silent-users-message [users]
   (format
@@ -87,11 +88,6 @@
 (defn unaccepted-guild-members []
   (->> @(messaging/list-guild-members! (:rest @state) (:guild-id config) :limit 1000)
     (remove member-accepted?)))
-
-(defn message->user-timestamps [message]
-  (apply merge
-    (for [id (message-author-and-mentions-ids message)]
-      {id (java-time/instant (:timestamp message))})))
 
 (defn user-id->max-timestamp []
   (let [messages (get-all-channel-messages (get-in config [:channel-ids :introduction]))
@@ -119,6 +115,7 @@
       (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction])
         :content (remind-silent-users-message silent-users)))))
 
+; TODO: delete kicked member messages and clean intro channel
 (defn kick-silent-users []
   (let [silent-users (users-silent-for-n-days (:introduction-kick-days config))]
     (when (seq silent-users)

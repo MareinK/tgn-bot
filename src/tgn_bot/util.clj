@@ -34,4 +34,4 @@
       (> (count bulk-deletable) 1) (doseq [messages-part (partition-all 200 bulk-deletable)]
                                      (messaging/bulk-delete-messages! (:rest @state) channel-id (map :id messages-part))))
     (doseq [message single-deletable]
-      (messaging/delete-message! (:rest @state) channel-id (:id message)))))
+      @(messaging/delete-message! (:rest @state) channel-id (:id message)))))
