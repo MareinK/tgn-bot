@@ -1,7 +1,7 @@
 (ns tgn-bot.commands
   (:require [tgn-bot.core :refer [state config]]
             [tgn-bot.acceptance :refer [accept]]
-            [tgn-bot.pronouns :refer [user-pronouns-add! user-pronouns-remove!]]
+            [tgn-bot.pronouns :as pronouns]
             [discljord.messaging :as messaging]
             [clojure.string :as str]))
 
@@ -30,14 +30,24 @@
            (not-any? #{(get-in config [:role-ids :accepted])} (get-in mention [:member :roles])))
       (accept author mention guild-id))))
 
-(defmethod handle-command :pronoun [command args {:keys [member]}]
+(defmethod handle-command :pronoun [command args {:keys [channel-id author]}]
   (if args
-    (let [pronouns (filter seq (str/split "" #"\s+"))]
-      (do
-        (user-pronouns-add! (:user member) pronouns)
-        #_ (send channel message)))
-    (do
-      #_(pronoun help text))))
+    (let [pronouns (set (filter seq (str/split args #"\s+")))]
+      (pronouns/user-pronouns-add! channel-id author pronouns))
+    @(messaging/create-message! (:rest @state) channel-id
+       :content (pronouns/pronoun-help-message))))
 
-(defmethod handle-command :unpronoun [command args data]
-  )
+(defmethod handle-command :unpronoun [command args {:keys [channel-id author]}]
+  (if args
+    (let [pronouns (set (filter seq (str/split args #"\s+")))]
+      (pronouns/user-pronouns-remove! author pronouns)
+      @(messaging/create-message! (:rest @state) channel-id
+         :content (pronouns/pronouns-removed-message pronouns author)))
+    @(messaging/create-message! (:rest @state) channel-id
+       :content (pronouns/pronoun-help-message))))
+
+(comment
+  (let [member (first @(messaging/list-guild-members! (:rest @state) (:guild-id config)))]
+    (handle-command :pronoun "Accepted" {:channel-id "820057899446304851" :author (:user member)}))
+  (let [member (first @(messaging/list-guild-members! (:rest @state) (:guild-id config)))]
+    (handle-command :unpronoun "she/her they/them" {:channel-id "820057899446304851" :member member})))

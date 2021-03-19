@@ -8,7 +8,11 @@
             :kick-reason "Je hebt jezelf niet voorgesteld en/of bent niet toegelaten tot de server."
             :kicked-channel "%s was te lang stil en is van de server verwijderd."
             :help "Gebruik `%saccept @username` om nieuwe gebruikers toegang te geven tot de server."
-            :too-many-to-kick "Ohjee! Ik wilde een hoop mensen tegelijk kicken, dus dat heb ik toch maar niet gedaan."}
+            :too-many-to-kick "Ohjee! Ik wilde een hoop mensen tegelijk kicken, dus dat heb ik toch maar niet gedaan."
+            :pronouns-added "Pronoun%s %s toegewezen aan %s!"
+            :pronouns-removed "Pronoun%s %s verwijderd van %s!"
+            :pronouns-help "De onderstaande pronouns zijn momenteel in gebruik:\n\n%s\n\nZitten jouw pronouns er niet bij? Gebruik simpelweg `!pronoun wat/je maar/wilt` om één of meerdere pronouns aan jezelf toe te wijzen. Gebruik `/unpronoun` als je pronouns wilt weghalen."
+            :pronouns-invalid "Eén of meerdere van de genoemde pronouns is niet toegestaan."}
  :responses ["Hallo daar" "Goededag" "Hoi" "Hee" "Howdy :cowboy:"]
  :introduction-reminder-days 7
  :introduction-kick-days 14
