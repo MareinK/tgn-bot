@@ -23,7 +23,7 @@
 (defn random-response [user]
   (str (rand-nth (:responses config)) ", " (formatting/mention-user user) \!))
 
-(def command-pattern (re-pattern (str (:command-prefix config) #"(\S+)\s*(.*)")))
+(def command-pattern (re-pattern (str (:command-prefix config) #"(\S+)\s*(.+)?")))
 
 (defmethod handle-event :message-create
   [_ {:keys [channel-id author content mentions] :as data}]

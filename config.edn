@@ -11,4 +11,5 @@
             :too-many-to-kick "Ohjee! Ik wilde een hoop mensen tegelijk kicken, dus dat heb ik toch maar niet gedaan."}
  :responses ["Hallo daar" "Goededag" "Hoi" "Hee" "Howdy :cowboy:"]
  :introduction-reminder-days 7
- :introduction-kick-days 14}
+ :introduction-kick-days 14
+ :pronoun-role-color 2067276}
