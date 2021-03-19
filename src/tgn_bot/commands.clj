@@ -40,14 +40,17 @@
 (defmethod handle-command :unpronoun [command args {:keys [channel-id author]}]
   (if args
     (let [pronouns (set (filter seq (str/split args #"\s+")))]
-      (pronouns/user-pronouns-remove! author pronouns)
-      @(messaging/create-message! (:rest @state) channel-id
-         :content (pronouns/pronouns-removed-message pronouns author)))
+      (pronouns/user-pronouns-remove! channel-id author pronouns))
     @(messaging/create-message! (:rest @state) channel-id
        :content (pronouns/pronoun-help-message))))
 
+(defmethod handle-command :pronouns [command & args]
+  (apply handle-command :pronoun args))
+
 (comment
   (let [member (first @(messaging/list-guild-members! (:rest @state) (:guild-id config)))]
-    (handle-command :pronoun "Accepted" {:channel-id "820057899446304851" :author (:user member)}))
+    (handle-command :pronoun "she/her" {:channel-id "820057899446304851" :author (:user member)}))
   (let [member (first @(messaging/list-guild-members! (:rest @state) (:guild-id config)))]
-    (handle-command :unpronoun "she/her they/them" {:channel-id "820057899446304851" :member member})))
+    (handle-command :pronouns "Accepted" {:channel-id "820057899446304851" :author (:user member)}))
+  (let [member (first @(messaging/list-guild-members! (:rest @state) (:guild-id config)))]
+    (handle-command :unpronoun "she/her" {:channel-id "820057899446304851" :author (:user member)})))

@@ -56,12 +56,28 @@
       @(messaging/create-message! (:rest @state) channel-id
          :content (pronoun-invalid-message)))))
 
-(defn user-pronouns-remove! [user pronouns]
-  (let [pronoun-roles (->>
-                        @(messaging/get-guild-roles! (:rest @state) (:guild-id config))
-                        (filter pronoun-role?))]
-    (doseq [pronoun pronouns]
-      (when-let [pronoun-role (first (filter #(= (:name %) pronoun) pronoun-roles))]
-        @(messaging/remove-guild-member-role! (:rest @state) (:guild-id config)
-           (:id user)
-           (:id pronoun-role))))))
+(defn empty-role? [role]
+  (let [members @(messaging/list-guild-members! (:rest @state) (:guild-id config) :limit 1000)]
+    (not-any? #(some #{(:id role)} (:roles %)) members)))
+
+(comment
+  (empty-role? {:id "822538317395787868"}))
+
+(defn user-pronouns-remove! [channel-id user pronouns]
+  (let [roles @(messaging/get-guild-roles! (:rest @state) (:guild-id config))]
+    (if (every? #(valid-pronoun? roles %) pronouns)
+      (do
+        (let [pronoun-roles (->>
+                              @(messaging/get-guild-roles! (:rest @state) (:guild-id config))
+                              (filter pronoun-role?))]
+          (doseq [pronoun pronouns]
+            (when-let [pronoun-role (first (filter #(= (:name %) pronoun) pronoun-roles))]
+              @(messaging/remove-guild-member-role! (:rest @state) (:guild-id config)
+                 (:id user)
+                 (:id pronoun-role))
+              (when (empty-role? pronoun-role)
+                @(messaging/delete-guild-role! (:rest @state) (:guild-id config) (:id pronoun-role))))))
+        @(messaging/create-message! (:rest @state) channel-id
+           :content (pronouns-removed-message pronouns user)))
+      @(messaging/create-message! (:rest @state) channel-id
+         :content (pronoun-invalid-message)))))
