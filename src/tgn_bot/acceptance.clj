@@ -49,6 +49,10 @@
     (formatting/mention-user acceptor)
     (formatting/mention-user accepted)))
 
+; TODO: delete or edit messages mentioning the accepted member?
+; maybe just have a clean_channel function that does all this. we don't need to delete user messages separately then
+; and also delete messages by/mentioning users that are no longer members
+; and/or check if there is a 'member left' hook and run clean-channel then? (if they were accepted member)
 (defn accept [acceptor accepted guild-id]
   (messaging/modify-guild-member!
     (:rest @state)
