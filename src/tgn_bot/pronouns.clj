@@ -5,6 +5,8 @@
             [discljord.formatting :as formatting]
             [clojure.string :as str]))
 
+(def pronoun-regex #"[A-Za-z][A-Za-z-//]*[A-Za-z]")
+
 (defn pronouns-added-message [pronouns user]
   (format
     (get-in config [:messages :pronouns-added])
@@ -36,7 +38,9 @@
 
 (defn valid-pronoun? [roles pronoun]
   (let [non-pronoun-roles (remove pronoun-role? roles)]
-    (not-any? #(= pronoun (:name %)) non-pronoun-roles)))
+    (and
+      (re-matches pronoun-regex pronoun)
+      (not-any? #(= pronoun (:name %)) non-pronoun-roles))))
 
 (defn user-pronouns-add! [channel-id user pronouns]
   (let [roles @(messaging/get-guild-roles! (:rest @state) (:guild-id config))]
