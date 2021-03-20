@@ -6,6 +6,9 @@
             [clojure.string :as str]
             java-time))
 
+(defn member-acceptor? [member]
+  (some #{(get-in config [:role-ids :acceptor])} (:roles member)))
+
 (defn member-accepted? [member]
   (some #{(get-in config [:role-ids :accepted])} (:roles member)))
 
@@ -22,56 +25,63 @@
         your-messages (when has-messages (get-in config [:messages :accepted-private-your-messages]))]
     (str/join " " [accepted-private your-messages])))
 
-(defn message-author-and-mentions-ids [message]
-  (map :id (conj (:mentions message) (:author message))))
-
-(defn relevant-message? [id->member message]
-  (let [users-roles (->> (message-author-and-mentions-ids message)
-                      (map id->member)
-                      (map :roles)
-                      (filter some?))]
-    (some #(not-any? #{(get-in config [:role-ids :accepted])} %) users-roles)))
-
-(defn construct-id->member [guild-id user-ids]
-  (apply merge
-    (for [user-id user-ids]
-      {user-id @(messaging/get-guild-member! (:rest @state) guild-id user-id)})))
-
-(defn irrelevant-messages [guild-id messages]
-  (let [messages-user-ids (map message-author-and-mentions-ids messages)
-        unique-user-ids (set (apply concat messages-user-ids))
-        id->member (construct-id->member guild-id unique-user-ids)]
-    (take-while #(not (relevant-message? id->member %)) (reverse messages))))
-
 (defn accepted-channel-message [acceptor accepted]
   (format
     (get-in config [:messages :accepted-channel])
     (formatting/mention-user acceptor)
-    (formatting/mention-user accepted)))
+    (:username accepted)))
 
-; TODO: delete or edit messages mentioning the accepted member?
-; maybe just have a clean_channel function that does all this. we don't need to delete user messages separately then
-; and also delete messages by/mentioning users that are no longer members
-; and/or check if there is a 'member left' hook and run clean-channel then? (if they were accepted member)
+(defn mentions-unaccepted? [id->member message]
+  (some
+    (complement member-accepted?)
+    (filter identity (->> message :mentions (map :id) (map id->member)))))
+
+(defn unwanted? [id->member message]
+  (let [author-member (id->member (get-in message [:author :id]))
+        mention-members (filter identity (map #(-> % :id id->member) (:mentions message)))]
+    (or
+      (nil? author-member)
+      (and
+        (member-acceptor? author-member)
+        (not-empty mention-members)
+        (every? member-accepted? mention-members))
+      (and
+        (not (member-acceptor? author-member))
+        (member-accepted? author-member)))))
+
+(defn clean-introduction-messages [messages]
+  (let [members @(messaging/list-guild-members! (:rest @state) (:guild-id config) :limit 1000)
+        id->member (zipmap (map (comp :id :user) members) members)
+        [irrelevant relevant] (split-with (partial (complement mentions-unaccepted?) id->member) (reverse messages))
+        unwanted (filter (partial unwanted? id->member) relevant)]
+    (delete-messages! (get-in config [:channel-ids :introduction]) (concat irrelevant unwanted))))
+
+(comment
+  (let [messages (get-all-channel-messages (get-in config [:channel-ids :introduction]))]
+    (clean-introduction-messages messages)))
+
+(defn user-messages-string [messages user-id]
+  (->>
+    messages
+    (filter #(= (get-in % [:author :id]) user-id))
+    (reverse)
+    (map :content)
+    (str/join "\n\n" )))
+
 (defn accept [acceptor accepted guild-id]
-  (messaging/modify-guild-member!
+  @(messaging/modify-guild-member!
     (:rest @state)
     guild-id
     (:id accepted)
     :roles (conj (get-in accepted [:member :roles]) (get-in config [:role-ids :accepted])))
   (let [channel-messages (get-all-channel-messages (get-in config [:channel-ids :introduction]))
-        user-messages (filter #(= (get-in % [:author :id]) (:id accepted)) channel-messages)
-        dm-channel @(messaging/create-dm! (:rest @state) (:id accepted))
-        user-messages-message (str/join "\n\n" (map :content (reverse user-messages)))
-        messages-to-delete (concat user-messages (irrelevant-messages guild-id channel-messages))]
+        user-messages-message (user-messages-string channel-messages (:id accepted))
+        dm-channel @(messaging/create-dm! (:rest @state) (:id accepted))]
     (messaging/create-message! (:rest @state) (get-in config [:channel-ids :welcome]) :content (welcome-message accepted))
     (messaging/create-message! (:rest @state) (:id dm-channel) :content (accepted-private-message (seq user-messages-message)))
     (messaging/create-message! (:rest @state) (:id dm-channel) :content user-messages-message)
-    (delete-messages! (get-in config [:channel-ids :introduction]) messages-to-delete)
-    (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction]) :content (accepted-channel-message acceptor accepted))))
-
-(comment
-  (irrelevant-messages (:guild-id config) (get-all-channel-messages (get-in config [:channel-ids :introduction]))))
+    (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction]) :content (accepted-channel-message acceptor accepted))
+    (clean-introduction-messages channel-messages)))
 
 (defn remind-silent-users-message [users]
   (format
@@ -119,15 +129,15 @@
       (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction])
         :content (remind-silent-users-message silent-users)))))
 
-; TODO: delete kicked member messages and clean intro channel
 (defn kick-silent-users []
   (let [silent-users (users-silent-for-n-days (:introduction-kick-days config))]
     (when (seq silent-users)
       (if (<= (count silent-users) 3)
-        (do
+        (let [channel-messages (get-all-channel-messages (get-in config [:channel-ids :introduction]))]
+          (doseq [user silent-users]
+              @(messaging/remove-guild-member! (:rest @state) (:guild-id config) (:id user)))
           (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction])
             :content (kick-silent-users-message silent-users))
-          (for [user silent-users]
-              (messaging/remove-guild-member! (:rest @state) (:guild-id config) (:id user))))
+          (clean-introduction-messages channel-messages))
         (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction])
           :content (get-in config [:messages :too-many-to-kick]))))))

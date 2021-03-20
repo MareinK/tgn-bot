@@ -6,7 +6,7 @@
 
 (def standard-task-execution-time
   (->
-    (java-time/local-time 9 0)
+    (java-time/local-time 7 0)
     (java-time/zoned-date-time (java-time/zone-id "Europe/Amsterdam"))
     java-time/instant))
 

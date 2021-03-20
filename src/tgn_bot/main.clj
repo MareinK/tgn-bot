@@ -48,6 +48,7 @@
 
 (comment
   (reset! state (start-bot! (System/getenv "DISCORD_BOT_TOKEN") :guild-members :guild-messages :direct-messages))
+  (reset! bot-id (:id @(messaging/get-current-user! (:rest @state))))
   (tgn-bot.util/delete-messages! (get-in config [:channel-ids :introduction]) (tgn-bot.acceptance/irrelevant-messages (:guild-id config) (get-all-channel-messages (get-in config [:channel-ids :introduction]))))
   @(messaging/get-guild-roles! (:rest @state) (:guild-id config))
   @(messaging/list-guild-members! (:rest @state) (:guild-id config)))
