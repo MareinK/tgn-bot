@@ -37,6 +37,9 @@
     @(messaging/create-message! (:rest @state) channel-id
        :content (pronouns/pronoun-help-message))))
 
+(defmethod handle-command :pronouns [command & args]
+  (apply handle-command :pronoun args))
+
 (defmethod handle-command :unpronoun [command args {:keys [channel-id author]}]
   (if args
     (let [pronouns (set (filter seq (str/split args #"\s+")))]
@@ -44,8 +47,8 @@
     @(messaging/create-message! (:rest @state) channel-id
        :content (pronouns/pronoun-help-message))))
 
-(defmethod handle-command :pronouns [command & args]
-  (apply handle-command :pronoun args))
+(defmethod handle-command :unpronouns [command & args]
+  (apply handle-command :unpronoun args))
 
 (comment
   (let [member (first @(messaging/list-guild-members! (:rest @state) (:guild-id config)))]

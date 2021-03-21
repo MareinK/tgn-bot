@@ -41,12 +41,11 @@
         mention-members (filter identity (map #(-> % :id id->member) (:mentions message)))]
     (or
       (nil? author-member)
-      (and
-        (member-acceptor? author-member)
-        (not-empty mention-members)
-        (every? member-accepted? mention-members))
-      (and
-        (not (member-acceptor? author-member))
+      (if (member-acceptor? author-member)
+        (and
+          (not-empty mention-members)
+          (every? member-accepted? mention-members)
+          (not-every? member-acceptor? mention-members))
         (member-accepted? author-member)))))
 
 (defn clean-introduction-messages [messages]
