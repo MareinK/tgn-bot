@@ -3,7 +3,10 @@
             [tgn-bot.acceptance :refer [accept]]
             [tgn-bot.commands :refer [handle-command]]
             [discljord.messaging :as messaging]
-            [discljord.formatting :as formatting]))
+            [discljord.formatting :as formatting]
+            [tgn-bot.pronouns :as pronouns]
+            [tgn-bot.acceptance :as acceptance]
+            [tgn-bot.util :refer [get-all-channel-messages]]))
 
 (defmulti handle-event (fn [type data] type))
 
@@ -32,3 +35,9 @@
       (messaging/create-message! (:rest @state) channel-id :content (str (random-response author) " ")))
     (when-let [[_ command args] (re-matches command-pattern content)]
       (handle-command (keyword command) args data))))
+
+(defmethod handle-event :guild-member-remove
+  [_ _]
+  (pronouns/remove-empty-pronouns)
+  (let [messages (get-all-channel-messages (get-in config [:channel-ids :introduction]))]
+    (acceptance/clean-introduction-messages messages)))

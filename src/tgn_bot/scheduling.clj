@@ -18,7 +18,6 @@
   (log/info "Executing daily tasks.")
   (acceptance/remind-silent-users)
   (acceptance/kick-silent-users)
-  (pronouns/remove-empty-pronouns)
   #_(daily-event-reminder))
 
 (defn monthly-tasks [time]

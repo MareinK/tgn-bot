@@ -132,11 +132,10 @@
   (let [silent-users (users-silent-for-n-days (:introduction-kick-days config))]
     (when (seq silent-users)
       (if (<= (count silent-users) 3)
-        (let [channel-messages (get-all-channel-messages (get-in config [:channel-ids :introduction]))]
+        (do
           (doseq [user silent-users]
               @(messaging/remove-guild-member! (:rest @state) (:guild-id config) (:id user)))
           (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction])
-            :content (kick-silent-users-message silent-users))
-          (clean-introduction-messages channel-messages))
+            :content (kick-silent-users-message silent-users)))
         (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction])
           :content (get-in config [:messages :too-many-to-kick]))))))
