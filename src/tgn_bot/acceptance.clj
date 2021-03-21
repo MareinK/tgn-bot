@@ -38,14 +38,19 @@
 
 (defn unwanted? [id->member message]
   (let [author-member (id->member (get-in message [:author :id]))
-        mention-members (filter identity (map #(-> % :id id->member) (:mentions message)))]
+        mention-members (map #(-> % :id id->member) (:mentions message))]
     (or
       (nil? author-member)
       (if (member-acceptor? author-member)
         (and
           (not-empty mention-members)
-          (every? member-accepted? mention-members)
-          (not-every? member-acceptor? mention-members))
+          (every?
+            #(or
+               (nil? %)
+               (and
+                 (not (member-acceptor? %))
+                 (member-accepted? %)))
+            mention-members))
         (member-accepted? author-member)))))
 
 (defn clean-introduction-messages [messages]
