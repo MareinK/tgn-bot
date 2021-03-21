@@ -29,7 +29,8 @@
   (format
     (get-in config [:messages :accepted-channel])
     (formatting/mention-user acceptor)
-    (:username accepted)))
+    (formatting/bold
+      (or (get-in accepted [:member :nick]) (:username accepted)))))
 
 (defn mentions-unaccepted? [id->member message]
   (some

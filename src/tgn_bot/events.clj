@@ -1,6 +1,5 @@
 (ns tgn-bot.events
   (:require [tgn-bot.core :refer [state config bot-id]]
-            [tgn-bot.acceptance :refer [accept]]
             [tgn-bot.commands :refer [handle-command]]
             [discljord.messaging :as messaging]
             [discljord.formatting :as formatting]

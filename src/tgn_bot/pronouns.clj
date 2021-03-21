@@ -1,6 +1,5 @@
 (ns tgn-bot.pronouns
   (:require [tgn-bot.core :refer [state config]]
-            [tgn-bot.acceptance :refer [accept]]
             [discljord.messaging :as messaging]
             [discljord.formatting :as formatting]
             [clojure.string :as str]))
