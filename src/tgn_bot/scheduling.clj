@@ -1,5 +1,6 @@
 (ns tgn-bot.scheduling
   (:require [tgn-bot.acceptance :as acceptance]
+            [tgn-bot.pronouns :as pronouns]
             [chime.core :as chime]
             [clojure.tools.logging :as log]
             java-time))
@@ -17,6 +18,7 @@
   (log/info "Executing daily tasks.")
   (acceptance/remind-silent-users)
   (acceptance/kick-silent-users)
+  (pronouns/remove-empty-pronouns)
   #_(daily-event-reminder))
 
 (defn monthly-tasks [time]

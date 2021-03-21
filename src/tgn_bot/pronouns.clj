@@ -45,16 +45,15 @@
 (defn user-pronouns-add! [channel-id user pronouns]
   (let [roles @(messaging/get-guild-roles! (:rest @state) (:guild-id config))]
     (if (every? #(valid-pronoun? roles %) pronouns)
-      (do
-        (let [pronoun-roles (filter pronoun-role? roles)]
-          (doseq [pronoun pronouns]
-            (let [pronoun-role (or
-                                 (first (filter #(= (:name %) pronoun) pronoun-roles))
-                                 @(messaging/create-guild-role! (:rest @state) (:guild-id config)
-                                    :name pronoun :color (:pronoun-role-color config)))]
-              @(messaging/add-guild-member-role! (:rest @state) (:guild-id config)
-                 (:id user)
-                 (:id pronoun-role)))))
+      (let [pronoun-roles (filter pronoun-role? roles)]
+        (doseq [pronoun pronouns]
+          (let [pronoun-role (or
+                               (first (filter #(= (:name %) pronoun) pronoun-roles))
+                               @(messaging/create-guild-role! (:rest @state) (:guild-id config)
+                                  :name pronoun :color (:pronoun-role-color config)))]
+            @(messaging/add-guild-member-role! (:rest @state) (:guild-id config)
+               (:id user)
+               (:id pronoun-role))))
         @(messaging/create-message! (:rest @state) channel-id
            :content (pronouns-added-message pronouns user)))
       @(messaging/create-message! (:rest @state) channel-id
@@ -70,18 +69,24 @@
 (defn user-pronouns-remove! [channel-id user pronouns]
   (let [roles @(messaging/get-guild-roles! (:rest @state) (:guild-id config))]
     (if (every? #(valid-pronoun? roles %) pronouns)
-      (do
-        (let [pronoun-roles (->>
-                              @(messaging/get-guild-roles! (:rest @state) (:guild-id config))
-                              (filter pronoun-role?))]
-          (doseq [pronoun pronouns]
-            (when-let [pronoun-role (first (filter #(= (:name %) pronoun) pronoun-roles))]
-              @(messaging/remove-guild-member-role! (:rest @state) (:guild-id config)
-                 (:id user)
-                 (:id pronoun-role))
-              (when (empty-role? pronoun-role)
-                @(messaging/delete-guild-role! (:rest @state) (:guild-id config) (:id pronoun-role))))))
+      (let [pronoun-roles (filter pronoun-role? roles)]
+        (doseq [pronoun pronouns]
+          (when-let [pronoun-role (first (filter #(= (:name %) pronoun) pronoun-roles))]
+            @(messaging/remove-guild-member-role! (:rest @state) (:guild-id config)
+               (:id user)
+               (:id pronoun-role))
+            (when (empty-role? pronoun-role)
+              @(messaging/delete-guild-role! (:rest @state) (:guild-id config) (:id pronoun-role)))))
         @(messaging/create-message! (:rest @state) channel-id
            :content (pronouns-removed-message pronouns user)))
       @(messaging/create-message! (:rest @state) channel-id
          :content (pronoun-invalid-message)))))
+
+(defn remove-empty-pronouns []
+  (let [pronoun-roles (->>
+                        @(messaging/get-guild-roles! (:rest @state) (:guild-id config))
+                        (filter pronoun-role?))
+        members @(messaging/list-guild-members! (:rest @state) (:guild-id config) :limit 1000)]
+    (doseq [pronoun-role pronoun-roles]
+      (when (not-any? #(some #{(:id pronoun-role)} (:roles %)) members)
+        @(messaging/delete-guild-role! (:rest @state) (:guild-id config) (:id pronoun-role))))))
