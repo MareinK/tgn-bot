@@ -10,15 +10,21 @@
 (defmethod handle-command :default [command args data]
   #_(println type data))
 
+(defn intro-help-message []
+  (format
+    (get-in config [:messages :intro-help])
+    (:command-prefix config)))
+
 (defn help-message []
   (format
-   (get-in config [:messages :help])
-   (:command-prefix config)))
+    (get-in config [:messages :help])
+    (:command-prefix config)))
 
 (defmethod handle-command :help [command args {:keys [channel-id member]}]
-  (when (and
+  (if (and
          (= channel-id (get-in config [:channel-ids :introduction]))
          (some #{(get-in config [:role-ids :acceptor])} (:roles member)))
+    (messaging/create-message! (:rest @state) channel-id :content (intro-help-message))
     (messaging/create-message! (:rest @state) channel-id :content (help-message))))
 
 (defmethod handle-command :accept [command args {:keys [guild-id channel-id id author member mentions]}]

@@ -6,10 +6,10 @@
             [clojure.string :as str]
             java-time))
 
-(defn member-acceptor? [member]
+(defn acceptor? [member]
   (some #{(get-in config [:role-ids :acceptor])} (:roles member)))
 
-(defn member-accepted? [member]
+(defn accepted? [member]
   (some #{(get-in config [:role-ids :accepted])} (:roles member)))
 
 (defn welcome-message [user]
@@ -34,7 +34,7 @@
 
 (defn mentions-unaccepted? [id->member message]
   (some
-    (complement member-accepted?)
+    (complement accepted?)
     (filter identity (->> message :mentions (map :id) (map id->member)))))
 
 (defn unwanted? [id->member message]
@@ -42,17 +42,17 @@
         mention-members (map #(-> % :id id->member) (:mentions message))]
     (or
       (nil? author-member)
-      (if (member-acceptor? author-member)
+      (if (acceptor? author-member)
         (and
           (not-empty mention-members)
           (every?
             #(or
                (nil? %)
                (and
-                 (not (member-acceptor? %))
-                 (member-accepted? %)))
+                 (not (acceptor? %))
+                 (accepted? %)))
             mention-members))
-        (member-accepted? author-member)))))
+        (accepted? author-member)))))
 
 (defn clean-introduction-messages [messages]
   (let [members @(messaging/list-guild-members! (:rest @state) (:guild-id config) :limit 1000)
@@ -106,7 +106,7 @@
 
 (defn unaccepted-guild-members []
   (->> @(messaging/list-guild-members! (:rest @state) (:guild-id config) :limit 1000)
-    (remove member-accepted?)))
+    (remove accepted?)))
 
 (defn user-id->max-timestamp []
   (let [messages (get-all-channel-messages (get-in config [:channel-ids :introduction]))

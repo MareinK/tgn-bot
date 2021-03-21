@@ -42,7 +42,8 @@
       (not-any? #(= pronoun (:name %)) non-pronoun-roles))))
 
 (defn user-pronouns-add! [channel-id user pronouns]
-  (let [roles @(messaging/get-guild-roles! (:rest @state) (:guild-id config))]
+  (let [pronouns (map str/lower-case pronouns)
+        roles @(messaging/get-guild-roles! (:rest @state) (:guild-id config))]
     (if (every? #(valid-pronoun? roles %) pronouns)
       (let [pronoun-roles (filter pronoun-role? roles)]
         (doseq [pronoun pronouns]
@@ -66,7 +67,8 @@
   (empty-role? {:id "822538317395787868"}))
 
 (defn user-pronouns-remove! [channel-id user pronouns]
-  (let [roles @(messaging/get-guild-roles! (:rest @state) (:guild-id config))]
+  (let [pronouns (map str/lower-case pronouns)
+        roles @(messaging/get-guild-roles! (:rest @state) (:guild-id config))]
     (if (every? #(valid-pronoun? roles %) pronouns)
       (let [pronoun-roles (filter pronoun-role? roles)]
         (doseq [pronoun pronouns]
