@@ -35,8 +35,16 @@
     (when-let [[_ command args] (re-matches command-pattern content)]
       (handle-command (keyword command) args data))))
 
+(defn user-left-message [user]
+  (format
+    (get-in config [:messages :user-left])
+    (formatting/bold (:username user))))
+
 (defmethod handle-event :guild-member-remove
-  [_ _]
+  [_ {:keys [user]}]
   (pronouns/remove-empty-pronouns)
-  (let [messages (get-all-channel-messages (get-in config [:channel-ids :introduction]))]
-    (acceptance/clean-introduction-messages messages)))
+  (let [messages (get-all-channel-messages (get-in config [:channel-ids :introduction]))
+        deleted (acceptance/clean-introduction-messages messages)]
+    (when (seq deleted)
+      (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction])
+        :content (user-left-message user)))))

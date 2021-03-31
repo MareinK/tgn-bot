@@ -58,8 +58,10 @@
   (let [members @(messaging/list-guild-members! (:rest @state) (:guild-id config) :limit 1000)
         id->member (zipmap (map (comp :id :user) members) members)
         [irrelevant relevant] (split-with (partial (complement mentions-unaccepted?) id->member) (reverse messages))
-        unwanted (filter (partial unwanted? id->member) relevant)]
-    (delete-messages! (get-in config [:channel-ids :introduction]) (concat irrelevant unwanted))))
+        unwanted (filter (partial unwanted? id->member) relevant)
+        to-delete (concat irrelevant unwanted)]
+    (delete-messages! (get-in config [:channel-ids :introduction]) to-delete)
+    to-delete))
 
 (comment
   (let [messages (get-all-channel-messages (get-in config [:channel-ids :introduction]))]
