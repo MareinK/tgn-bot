@@ -14,6 +14,7 @@
                  [ring/ring-servlet "1.9.1"]
                  [jarohen/chime "0.3.2"]
                  [org.suskalo/discljord "1.2.2"]
+                 [cheshire "5.10.0"]
                  [clj-jwt "0.1.1"]
                  [clj-time "0.15.2"]
                  [clj-http "3.12.1"]]
