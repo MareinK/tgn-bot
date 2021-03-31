@@ -25,10 +25,10 @@
 
 (defn serve [port]
   (run-jetty
-    (constantly {:status 200})
-    {:host "0.0.0.0"
-     :port port
-     :join? false}))
+   (constantly {:status 200})
+   {:host "0.0.0.0"
+    :port port
+    :join? false}))
 
 (defn -main [& args]
   (let [port (System/getenv "PORT")
@@ -44,7 +44,6 @@
           (message-pump! (:events @state) handle-event)
           (finally (stop-bot! @state))))
       (throw (ex-info "Not all environment variables are set." {})))))
-
 
 (comment
   (reset! state (start-bot! (System/getenv "DISCORD_BOT_TOKEN") :guild-members :guild-messages :direct-messages))

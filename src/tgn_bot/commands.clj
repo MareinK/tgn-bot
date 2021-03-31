@@ -12,18 +12,18 @@
 
 (defn intro-help-message []
   (format
-    (get-in config [:messages :intro-help])
-    (:command-prefix config)))
+   (get-in config [:messages :intro-help])
+   (:command-prefix config)))
 
 (defn help-message []
   (format
-    (get-in config [:messages :help])
-    (:command-prefix config)))
+   (get-in config [:messages :help])
+   (:command-prefix config)))
 
 (defmethod handle-command :help [command args {:keys [channel-id member]}]
   (if (and
-         (= channel-id (get-in config [:channel-ids :introduction]))
-         (some #{(get-in config [:role-ids :acceptor])} (:roles member)))
+       (= channel-id (get-in config [:channel-ids :introduction]))
+       (some #{(get-in config [:role-ids :acceptor])} (:roles member)))
     (messaging/create-message! (:rest @state) channel-id :content (intro-help-message))
     (messaging/create-message! (:rest @state) channel-id :content (help-message))))
 
@@ -41,7 +41,7 @@
     (let [pronouns (set (filter seq (str/split args #"\s+")))]
       (pronouns/user-pronouns-add! channel-id author pronouns))
     @(messaging/create-message! (:rest @state) channel-id
-       :content (pronouns/pronoun-help-message))))
+                                :content (pronouns/pronoun-help-message))))
 
 (defmethod handle-command :pronouns [command & args]
   (apply handle-command :pronoun args))
@@ -51,7 +51,7 @@
     (let [pronouns (set (filter seq (str/split args #"\s+")))]
       (pronouns/user-pronouns-remove! channel-id author pronouns))
     @(messaging/create-message! (:rest @state) channel-id
-       :content (pronouns/pronoun-help-message))))
+                                :content (pronouns/pronoun-help-message))))
 
 (defmethod handle-command :unpronouns [command & args]
   (apply handle-command :unpronoun args))

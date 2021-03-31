@@ -14,45 +14,45 @@
 
 (defn welcome-message [user]
   (format
-    (get-in config [:messages :welcome])
-    (formatting/mention-user user)))
+   (get-in config [:messages :welcome])
+   (formatting/mention-user user)))
 
 (defn accepted-private-message [has-messages]
   (let [accepted-private (format
-                           (get-in config [:messages :accepted-private])
-                           (formatting/mention-channel (get-in config [:channel-ids :introduction]))
-                           (formatting/mention-channel (get-in config [:channel-ids :welcome])))
+                          (get-in config [:messages :accepted-private])
+                          (formatting/mention-channel (get-in config [:channel-ids :introduction]))
+                          (formatting/mention-channel (get-in config [:channel-ids :welcome])))
         your-messages (when has-messages (get-in config [:messages :accepted-private-your-messages]))]
     (str/join " " [accepted-private your-messages])))
 
 (defn accepted-channel-message [acceptor accepted]
   (format
-    (get-in config [:messages :accepted-channel])
-    (formatting/mention-user acceptor)
-    (formatting/bold
-      (or (get-in accepted [:member :nick]) (:username accepted)))))
+   (get-in config [:messages :accepted-channel])
+   (formatting/mention-user acceptor)
+   (formatting/bold
+    (or (get-in accepted [:member :nick]) (:username accepted)))))
 
 (defn mentions-unaccepted? [id->member message]
   (some
-    (complement accepted?)
-    (filter identity (->> message :mentions (map :id) (map id->member)))))
+   (complement accepted?)
+   (filter identity (->> message :mentions (map :id) (map id->member)))))
 
 (defn unwanted? [id->member message]
   (let [author-member (id->member (get-in message [:author :id]))
         mention-members (map #(-> % :id id->member) (:mentions message))]
     (or
-      (nil? author-member)
-      (if (acceptor? author-member)
-        (and
-          (not-empty mention-members)
-          (every?
-            #(or
-               (nil? %)
-               (and
-                 (not (acceptor? %))
-                 (accepted? %)))
-            mention-members))
-        (accepted? author-member)))))
+     (nil? author-member)
+     (if (acceptor? author-member)
+       (and
+        (not-empty mention-members)
+        (every?
+         #(or
+           (nil? %)
+           (and
+            (not (acceptor? %))
+            (accepted? %)))
+         mention-members))
+       (accepted? author-member)))))
 
 (defn clean-introduction-messages [messages]
   (let [members @(messaging/list-guild-members! (:rest @state) (:guild-id config) :limit 1000)
@@ -67,11 +67,11 @@
 
 (defn user-messages-string [messages user-id]
   (->>
-    messages
-    (filter #(= (get-in % [:author :id]) user-id))
-    (reverse)
-    (map :content)
-    (str/join "\n\n" )))
+   messages
+   (filter #(= (get-in % [:author :id]) user-id))
+   (reverse)
+   (map :content)
+   (str/join "\n\n")))
 
 (defn accept [acceptor accepted guild-id]
   @(messaging/modify-guild-member!
@@ -90,26 +90,26 @@
 
 (defn remind-silent-users-message [users]
   (format
-    (get-in config [:messages :intro-reminder])
-    (->> users
-      (map :id)
-      (map formatting/mention-user)
-      (str/join " "))))
+   (get-in config [:messages :intro-reminder])
+   (->> users
+        (map :id)
+        (map formatting/mention-user)
+        (str/join " "))))
 
 (defn kick-silent-users-message [users]
   (format
-    (get-in config [:messages :kicked-channel])
-    (->> users
-      (map #(formatting/bold
-              (or (get-in % [:member :nick]) (:username %))))
-      (str/join " "))))
+   (get-in config [:messages :kicked-channel])
+   (->> users
+        (map #(formatting/bold
+               (or (get-in % [:member :nick]) (:username %))))
+        (str/join " "))))
 
 (defn kick-message []
   (get-in config [:messages :kick-message]))
 
 (defn unaccepted-guild-members []
   (->> @(messaging/list-guild-members! (:rest @state) (:guild-id config) :limit 1000)
-    (remove accepted?)))
+       (remove accepted?)))
 
 (defn user-id->max-timestamp []
   (let [messages (get-all-channel-messages (get-in config [:channel-ids :introduction]))
@@ -121,21 +121,21 @@
 (defn users-silent-for-n-days [days]
   (let [max-timestamps (user-id->max-timestamp)]
     (->>
-      (unaccepted-guild-members)
-      (filter
-        (fn [member]
-          (-> (or
-                (max-timestamps (get-in member [:user :id]))
-                (java-time/instant (:joined-at member)))
+     (unaccepted-guild-members)
+     (filter
+      (fn [member]
+        (-> (or
+             (max-timestamps (get-in member [:user :id]))
+             (java-time/instant (:joined-at member)))
             (java-time/time-between (java-time/instant) :days)
             (= days))))
-      (map :user))))
+     (map :user))))
 
 (defn remind-silent-users []
   (let [silent-users (users-silent-for-n-days (:introduction-reminder-days config))]
     (when (seq silent-users)
       (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction])
-        :content (remind-silent-users-message silent-users)))))
+                                 :content (remind-silent-users-message silent-users)))))
 
 (defn kick-silent-users []
   (let [silent-users (users-silent-for-n-days 0)]
@@ -143,10 +143,10 @@
       (if (<= (count silent-users) 3)
         (do
           @(messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction])
-            :content (kick-silent-users-message silent-users))
+                                      :content (kick-silent-users-message silent-users))
           (doseq [user silent-users]
             (let [dm-channel @(messaging/create-dm! (:rest @state) (:id user))]
               @(messaging/create-message! (:rest @state) (:id dm-channel) :content (kick-message))
               @(messaging/remove-guild-member! (:rest @state) (:guild-id config) (:id user)))))
         (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction])
-          :content (get-in config [:messages :too-many-to-kick]))))))
+                                   :content (get-in config [:messages :too-many-to-kick]))))))

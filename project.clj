@@ -13,6 +13,9 @@
                  [ring/ring-jetty-adapter "1.9.1"]
                  [ring/ring-servlet "1.9.1"]
                  [jarohen/chime "0.3.2"]
-                 [org.suskalo/discljord "1.2.2"]]
+                 [org.suskalo/discljord "1.2.2"]
+                 [clj-jwt "0.1.1"]
+                 [clj-time "0.15.2"]
+                 [clj-http "3.12.1"]]
   :main tgn-bot.main
   :min-lein-version "2.0.0")
