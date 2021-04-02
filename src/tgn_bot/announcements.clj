@@ -37,9 +37,13 @@
     "\n"
     (for [event events]
       (let [name (util/remove-prefix (:summary event) "TGN ")
-            date (->
-                   (java-time/instant (get-in event [:start :dateTime]))
-                   (java-time/local-date "Europe/Amsterdam"))
+            start (:start event)
+            date (if (:dateTime start)
+                   (->
+                     (java-time/instant (:dateTime start))
+                     (java-time/local-date "Europe/Amsterdam"))
+                   (->
+                     (java-time/local-date (:date start))))
             date-str (java-time/format "d/M" date)]
         (format "- %s: %s" date-str (formatting/bold name))))))
 

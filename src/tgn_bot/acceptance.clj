@@ -140,7 +140,7 @@
                                  :content (remind-silent-users-message silent-users)))))
 
 (defn kick-silent-users []
-  (let [silent-users (users-silent-for-n-days 0)]
+  (let [silent-users (users-silent-for-n-days (:introduction-kick-days config))]
     (when (seq silent-users)
       (if (<= (count silent-users) 3)
         (do
