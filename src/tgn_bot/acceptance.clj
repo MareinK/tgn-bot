@@ -104,7 +104,7 @@
    (->> users
         (map #(formatting/bold
                (or (get-in % [:member :nick]) (:username %))))
-        (str/join " "))))
+        (str/join ", "))))
 
 (defn kick-message []
   (get-in config [:messages :kick-message]))
@@ -140,15 +140,16 @@
                                  :content (remind-silent-users-message silent-users)))))
 
 (defn kick-silent-users []
-  (let [silent-users (users-silent-for-n-days (:introduction-kick-days config))]
+  (let [silent-users (users-silent-for-n-days (:introduction-kick-days config))
+        message (kick-silent-users-message silent-users)]
     (when (seq silent-users)
       (if (<= (count silent-users) 3)
         (do
-          @(messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction])
-                                      :content (kick-silent-users-message silent-users))
           (doseq [user silent-users]
             (let [dm-channel @(messaging/create-dm! (:rest @state) (:id user))]
               @(messaging/create-message! (:rest @state) (:id dm-channel) :content (kick-message))
-              @(messaging/remove-guild-member! (:rest @state) (:guild-id config) (:id user)))))
+              @(messaging/remove-guild-member! (:rest @state) (:guild-id config) (:id user))))
+          @(messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction])
+             :content message))
         (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction])
                                    :content (get-in config [:messages :too-many-to-kick]))))))
