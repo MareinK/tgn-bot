@@ -43,8 +43,7 @@
 (defmethod handle-event :guild-member-remove
   [_ {:keys [user]}]
   (pronouns/remove-empty-pronouns)
-  (let [messages (get-all-channel-messages (get-in config [:channel-ids :introduction]))
-        deleted (acceptance/clean-introduction-messages messages)]
+  (let [deleted (acceptance/clean-introduction-channel)]
     (when (seq deleted)
       (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction])
         :content (user-left-message user)))))

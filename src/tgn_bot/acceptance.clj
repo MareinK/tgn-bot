@@ -63,9 +63,12 @@
     (delete-messages! (get-in config [:channel-ids :introduction]) to-delete)
     to-delete))
 
-(comment
+(defn clean-introduction-channel []
   (let [messages (get-all-channel-messages (get-in config [:channel-ids :introduction]))]
     (clean-introduction-messages messages)))
+
+(comment
+  (clean-introduction-channel))
 
 (defn user-messages-string [messages user-id]
   (->>

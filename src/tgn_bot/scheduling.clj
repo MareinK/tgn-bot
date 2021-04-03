@@ -17,6 +17,7 @@
 (defn daily-tasks [time]
   (log/info "Executing daily tasks.")
   (announcements/daily-event-reminder)
+  (acceptance/clean-introduction-channel)
   (acceptance/remind-silent-users)
   (acceptance/kick-silent-users))
 
