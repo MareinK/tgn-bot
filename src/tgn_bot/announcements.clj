@@ -46,7 +46,7 @@
                 time (->
                        (java-time/instant (:dateTime start))
                        (java-time/local-time "Europe/Amsterdam"))
-                time-str (java-time/format "HH:mm" time)]
+                time-str (java-time/format "H:mm" time)]
             (format "- %s: %s vanaf %s" date-str (formatting/bold name) time-str))
           (let [date (->
                        (java-time/local-date (:date start)))
