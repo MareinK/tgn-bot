@@ -37,15 +37,21 @@
     "\n"
     (for [event events]
       (let [name (util/remove-prefix (:summary event) "TGN ")
-            start (:start event)
-            date (if (:dateTime start)
-                   (->
-                     (java-time/instant (:dateTime start))
-                     (java-time/local-date "Europe/Amsterdam"))
-                   (->
-                     (java-time/local-date (:date start))))
-            date-str (java-time/format "d/M" date)]
-        (format "- %s: %s" date-str (formatting/bold name))))))
+            start (:start event)]
+        (if (:dateTime start)
+          (let [date (->
+                       (java-time/instant (:dateTime start))
+                       (java-time/local-date "Europe/Amsterdam"))
+                date-str (java-time/format "d/M" date)
+                time (->
+                       (java-time/instant (:dateTime start))
+                       (java-time/local-time "Europe/Amsterdam"))
+                time-str (java-time/format "HH:mm" time)]
+            (format "- %s: %s vanaf %s" date-str (formatting/bold name) time-str))
+          (let [date (->
+                       (java-time/local-date (:date start)))
+                date-str (java-time/format "d/M" date)]
+            (format "- %s: %s" date-str (formatting/bold name))))))))
 
 (defn bi-weekly-message [events-one events-two]
   (format
@@ -56,7 +62,7 @@
 (defn bi-weekly-event-reminder []
   (let [events-one (calendar-api/get-events-days 0 14)
         events-two (calendar-api/get-events-days 14 14)]
-    (messaging/create-message! (:rest @state) (get-in config [:channel-ids :weekly-announcements])
+    @(messaging/create-message! (:rest @state) (get-in config [:channel-ids :weekly-announcements])
       :embed {:description (bi-weekly-message events-one events-two)})))
 
 (comment
