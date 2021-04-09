@@ -17,7 +17,21 @@
             :daily "%s om %s begint de activiteit %s! :tada:"
             :bi-weekly "Hallo allemaal! De komende twee weken vinden de volgende activiteiten plaats:\n\n%s\n\nEn in de twee weken daarna kun je deze activiteiten alvast in je agenda zetten:\n\n%s\n\nJe kunt ook altijd kijken op onze [kalender](http://www.transgendernijmegen.nl/kalender/), en natuurlijk kun je hier op Discord ook vragen stellen over de activiteiten. Veel plezier! :transgender_flag:"
             :user-left "%s heeft de server verlaten."}
- :responses ["Hallo daar" "Goededag" "Hoi" "Hee" "Howdy :cowboy:"]
+ :fluff-greetings ["Hallo daar" "Goededag" "Hoi" "Hee" "Howdy :cowboy:"]
+ :fluff-answers {"Ja" 30
+                 "Nee" 30
+                 "Misschien" 10
+                 "Onwaarschijnlijk" 5
+                 "Waarschijnlijk" 5
+                 "Ooit, op een dag" 1
+                 "Geen van beide" 1
+                 "Ik zou het niet doen" 1
+                 "Sorry, volgende vraag" 1
+                 "Vraag het later nog een keer" 1
+                 "Wat denk je zelf?" 1
+                 "Dat je dit vraagt zegt al genoeg" 1
+                 "Hier doe ik geen uitspraak over" 1
+                 "42" 1}
  :introduction-reminder-days 7
  :introduction-kick-days 14
  :pronoun-role-color 2067276

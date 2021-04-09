@@ -4,6 +4,7 @@
             [discljord.messaging :as messaging]
             [discljord.formatting :as formatting]
             [tgn-bot.pronouns :as pronouns]
+            [tgn-bot.fluff :as fluff]
             [tgn-bot.acceptance :as acceptance]
             [tgn-bot.util :refer [get-all-channel-messages]]))
 
@@ -22,16 +23,13 @@
   [_ {:keys [user] :as data}]
   (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction]) :content (introduction-message user)))
 
-(defn random-response [user]
-  (str (rand-nth (:responses config)) ", " (formatting/mention-user user) \!))
-
 (def command-pattern (re-pattern (str (:command-prefix config) #"(\S+)\s*(.+)?")))
 
 (defmethod handle-event :message-create
-  [_ {:keys [channel-id author content mentions] :as data}]
+  [_ {:keys [author content mentions] :as data}]
   (when (not= (:id author) @bot-id)
     (when (some #{@bot-id} (map :id mentions))
-      (messaging/create-message! (:rest @state) channel-id :content (str (random-response author) " ")))
+      (fluff/respond-to-bot-mention data))
     (when-let [[_ command args] (re-matches command-pattern content)]
       (handle-command (keyword command) args data))))
 
