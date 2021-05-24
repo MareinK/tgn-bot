@@ -14,7 +14,8 @@
             :pronouns-removed "Pronoun%s %s verwijderd van %s!"
             :pronouns-help "De onderstaande pronouns zijn momenteel in gebruik:\n\n%s\n\nZitten jouw pronouns er niet bij? Gebruik simpelweg `!pronoun wat/je maar/wilt` om één of meerdere pronouns aan jezelf toe te wijzen. Gebruik `!unpronoun` als je pronouns wilt weghalen."
             :pronouns-invalid "Eén of meerdere van de genoemde pronouns is niet juist of niet toegestaan."
-            :daily "%s om %s begint de activiteit %s! :tada:"
+            :daily-timed "%s om %s begint de activiteit %s! :tada:"
+            :daily-full "Vandaag vindt de activiteit %s plaats! :tada:"
             :bi-weekly "Hallo allemaal! De komende twee weken vinden de volgende activiteiten plaats:\n\n%s\n\nEn in de twee weken daarna kun je deze activiteiten alvast in je agenda zetten:\n\n%s\n\nJe kunt ook altijd kijken op onze [kalender](http://www.transgendernijmegen.nl/kalender/), en natuurlijk kun je hier op Discord ook vragen stellen over de activiteiten. Veel plezier! :transgender_flag:"
             :user-left "%s heeft de server verlaten."}
  :fluff-greetings ["Hallo daar" "Goededag" "Hoi" "Hee" "Howdy :cowboy:"]

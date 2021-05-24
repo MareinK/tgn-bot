@@ -16,21 +16,28 @@
 
 (defn daily-message [event]
   (let [name (util/remove-prefix (:summary event) "TGN ")
-        time (->
-               (java-time/instant (get-in event [:start :dateTime]))
-               (java-time/local-time "Europe/Amsterdam"))
-        time-str (java-time/format "H:mm" time)
-        today (if (java-time/before? time evening-time) "Vandaag" "Vanavond")]
-    (format
-      (get-in config [:messages :daily])
-      today
-      (formatting/bold time-str)
-      (formatting/bold name))))
+        start (:start event)]
+    (if (:dateTime start)
+      (let [time (->
+                   (java-time/instant (:dateTime start))
+                   (java-time/local-time "Europe/Amsterdam"))
+            time-str (java-time/format "H:mm" time)
+            today (if (java-time/before? time evening-time) "Vandaag" "Vanavond")]
+        (format
+          (get-in config [:messages :daily-timed])
+          today
+          (formatting/bold time-str)
+          (formatting/bold name)))
+      (if (= (java-time/local-date (:date start)) (java-time/local-date))
+        (format
+          (get-in config [:messages :daily-full])
+          (formatting/bold name))))))
 
 (defn daily-event-reminder []
   (doseq [event (calendar-api/get-events-days 0 1)]
-    (messaging/create-message! (:rest @state) (get-in config [:channel-ids :daily-announcements])
-      :content (daily-message event))))
+    (when-let [message (daily-message event)]
+      (messaging/create-message! (:rest @state) (get-in config [:channel-ids :daily-announcements])
+        :content message))))
 
 (defn events->list [events]
   (str/join
