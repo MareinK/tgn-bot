@@ -12,14 +12,14 @@
 
 (defn create-claim [creds]
   (->
-    (merge {:iss (:client_email creds)
-            :scope (str/join " " scopes)
-            :aud "https://www.googleapis.com/oauth2/v4/token"
-            :exp (-> 1 time/hours time/from-now)
-            :iat (time/now)})
-    jwt/jwt
-    (jwt/sign :RS256 (-> creds :private_key (#(StringReader. %)) (#(key/pem->private-key % nil))))
-    jwt/to-str))
+   (merge {:iss (:client_email creds)
+           :scope (str/join " " scopes)
+           :aud "https://www.googleapis.com/oauth2/v4/token"
+           :exp (-> 1 time/hours time/from-now)
+           :iat (time/now)})
+   jwt/jwt
+   (jwt/sign :RS256 (-> creds :private_key (#(StringReader. %)) (#(key/pem->private-key % nil))))
+   jwt/to-str))
 
 (defn request-token [creds]
   (let [claim (create-claim creds)
@@ -38,23 +38,23 @@
 
 (defn get-events-days [skips days]
   (let [today (->
-                (java-time/local-time 0 0)
-                (java-time/zoned-date-time (java-time/zone-id "Europe/Amsterdam"))
-                java-time/instant)
+               (java-time/local-time 0 0)
+               (java-time/zoned-date-time (java-time/zone-id "Europe/Amsterdam"))
+               java-time/instant)
         time-min (java-time/plus today (java-time/period skips :days))
         time-max (java-time/plus time-min (java-time/period days :days))]
     (-> (api-req
-          {:url (str
-                  "https://www.googleapis.com/calendar/v3/calendars/"
-                  (:calendar-id config)
-                  "/events"
-                  "?timeMin=" (java-time/format time-min)
-                  "&timeMax=" (java-time/format time-max)
-                  "&orderBy=startTime"
-                  "&singleEvents=true")
-           :method "GET"}
-          (request-token (:google-service-account-credentials config)))
-      (get-in [:body :items]))))
+         {:url (str
+                "https://www.googleapis.com/calendar/v3/calendars/"
+                (:calendar-id config)
+                "/events"
+                "?timeMin=" (java-time/format time-min)
+                "&timeMax=" (java-time/format time-max)
+                "&orderBy=startTime"
+                "&singleEvents=true")
+          :method "GET"}
+         (request-token (:google-service-account-credentials config)))
+        (get-in [:body :items]))))
 
 (comment
   (get-events-days 0 1)

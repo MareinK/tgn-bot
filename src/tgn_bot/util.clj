@@ -43,8 +43,8 @@
 
 (defn uniform
   (^long [] (.nextLong (Random. 42)))
-  (^long[lo hi] {:pre [(< lo hi)]}
-   (clojure.core/long (Math/floor (+ lo (* (.nextDouble (Random. 42)) (- hi lo)))))))
+  (^long [lo hi] {:pre [(< lo hi)]}
+                 (clojure.core/long (Math/floor (+ lo (* (.nextDouble (Random. 42)) (- hi lo)))))))
 
 (defn weighted-random-nth
   [item-weights]

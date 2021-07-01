@@ -35,8 +35,8 @@
 
 (defn user-left-message [user]
   (format
-    (get-in config [:messages :user-left])
-    (formatting/bold (:username user))))
+   (get-in config [:messages :user-left])
+   (formatting/bold (:username user))))
 
 (defmethod handle-event :guild-member-remove
   [_ {:keys [user]}]
@@ -44,4 +44,4 @@
   (let [deleted (acceptance/clean-introduction-channel)]
     (when (seq deleted)
       (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction])
-        :content (user-left-message user)))))
+                                 :content (user-left-message user)))))

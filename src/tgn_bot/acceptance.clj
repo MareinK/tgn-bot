@@ -153,6 +153,6 @@
               @(messaging/create-message! (:rest @state) (:id dm-channel) :content (kick-message))
               @(messaging/remove-guild-member! (:rest @state) (:guild-id config) (:id user))))
           @(messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction])
-             :content message))
+                                      :content message))
         (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction])
                                    :content (get-in config [:messages :too-many-to-kick]))))))
