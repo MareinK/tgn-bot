@@ -14,16 +14,17 @@
    (java-time/local-time "Europe/Amsterdam")))
 
 (defn location-string [event]
-  (let [locations-string (->>
-                          (:location-regexes config)
-                          (filter (fn [{:keys [regex]}] (re-find (re-pattern (str "(?i)" regex)) (:location event))))
-                          (map :message)
-                          (map formatting/bold)
-                          (str/join " en "))]
-    (when (not (str/blank? locations-string))
-      (format
-       (get-in config [:messages :daily-location])
-       locations-string))))
+  (when (:location event)
+    (let [locations-string (->>
+                            (:location-regexes config)
+                            (filter (fn [{:keys [regex]}] (re-find (re-pattern (str "(?i)" regex)) (:location event))))
+                            (map :message)
+                            (map formatting/bold)
+                            (str/join " en "))]
+      (when (not (str/blank? locations-string))
+        (format
+         (get-in config [:messages :daily-location])
+         locations-string)))))
 
 (defn daily-message [event]
   (let [name (util/remove-prefix (:summary event) "TGN ")
