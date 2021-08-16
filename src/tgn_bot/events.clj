@@ -17,7 +17,8 @@
   (format
    (get-in config [:messages :introduction])
    (formatting/mention-user user)
-   (formatting/mention-channel (get-in config [:channel-ids :introduction]))))
+   (formatting/mention-channel (get-in config [:channel-ids :introduction]))
+   (formatting/mention-channel (get-in config [:channel-ids :rules]))))
 
 (defmethod handle-event :guild-member-add
   [_ {:keys [user] :as data}]
