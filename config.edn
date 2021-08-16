@@ -1,5 +1,5 @@
 {:command-prefix "!"
- :messages {:introduction "Welkom %s, leuk dat je er bent! Je zit momenteel in het gelimiteerde %s kanaal. Wil je jezelf kort voorstellen en je link met transgender beschrijven? Zou je daarnaast willen aangeven dat je akkoord gaat met de regels in het #regels kanaal? Als je jezelf hebt voorgesteld en akkoord bent gegaan, dan geeft een moderator je zo snel mogelijk toegang tot de server."
+ :messages {:introduction "Welkom %s, leuk dat je er bent! Je zit momenteel in het gelimiteerde %s kanaal. Wil je jezelf kort voorstellen en je link met transgender beschrijven? Zou je daarnaast willen aangeven dat je akkoord gaat met de regels in het %s kanaal? Als je jezelf hebt voorgesteld en akkoord bent gegaan, dan geeft een moderator je zo snel mogelijk toegang tot de server."
             :welcome "Welkom %s!"
             :accepted-channel "%s heeft toegang gegeven aan %s."
             :accepted-private "Bedankt voor je bericht in het %s kanaal! Een moderator heeft je toegang gegeven tot de server. Als je wilt, kun je jezelf nog aan iedereen voorstellen in het %s kanaal."
