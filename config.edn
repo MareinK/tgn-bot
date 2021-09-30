@@ -21,6 +21,7 @@
             :user-left "%s heeft de server verlaten."}
  :location-regexes [{:regex "discord" :message "op Discord"}
                     {:regex "roze\\s*huis" :message "in het Roze Huis in Nijmegen"}
+                    {:regex "opstand" :message "in Café De Opstand in Nijmegen"}
                     {:regex "kronenburger\\s*park" :message "in het Kronenburgerpark in Nijmegen"}
                     {:regex "valkhof\\s*park" :message "in het Valkhofpark in Nijmegen"}]
  :fluff-greetings ["Hallo daar" "Goededag" "Hoi" "Hee" "Howdy :cowboy:"]
