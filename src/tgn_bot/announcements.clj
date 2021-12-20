@@ -32,20 +32,23 @@
   (let [name (util/remove-prefix (:summary event) "TGN ")
         start (:start event)]
     (if (:dateTime start)
-      (let [time (-> (java-time/instant (:dateTime start))
-                     (java-time/local-time "Europe/Amsterdam"))
+      (let [instant (java-time/instant (:dateTime start))
+            date (java-time/local-date instant "Europe/Amsterdam")
+            time (java-time/local-time instant "Europe/Amsterdam")
             time-str (java-time/format "H:mm" time)
             today
               (if (java-time/before? time evening-time) "Vandaag" "Vanavond")]
-        (str (format (get-in config [:messages :daily-timed])
-                     today
-                     (formatting/bold time-str)
-                     (formatting/bold name))
-             (location-string event)))
-      (when (= (java-time/local-date (:date start)) (java-time/local-date))
-        (str (format (get-in config [:messages :daily-full])
-                     (formatting/bold name))
-             (location-string event))))))
+        (when (= date (java-time/local-date))
+          (str (format (get-in config [:messages :daily-timed])
+                       today
+                       (formatting/bold time-str)
+                       (formatting/bold name))
+               (location-string event))))
+      (let [date (java-time/local-date (:date start))]
+        (when (= date (java-time/local-date))
+          (str (format (get-in config [:messages :daily-full])
+                       (formatting/bold name))
+               (location-string event)))))))
 
 (defn daily-event-reminder
   []
