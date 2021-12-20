@@ -10,39 +10,45 @@
 
 (defmulti handle-event (fn [type data] type))
 
-(defmethod handle-event :default [type data]
-  #_(println type data))
+(defmethod handle-event :default [type data] #_(println type data))
 
-(defn introduction-message [user]
-  (format
-   (get-in config [:messages :introduction])
-   (formatting/mention-user user)
-   (formatting/mention-channel (get-in config [:channel-ids :introduction]))
-   (formatting/mention-channel (get-in config [:channel-ids :rules]))))
+(defn introduction-message
+  [user]
+  (format (get-in config [:messages :introduction])
+          (formatting/mention-user user)
+          (formatting/mention-channel (get-in config
+                                              [:channel-ids :introduction]))
+          (formatting/mention-channel (get-in config [:channel-ids :rules]))))
 
 (defmethod handle-event :guild-member-add
-  [_ {:keys [user] :as data}]
-  (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction]) :content (introduction-message user)))
+  [_ {:keys [user], :as data}]
+  (messaging/create-message! (:rest @state)
+                             (get-in config [:channel-ids :introduction])
+                             :content
+                             (introduction-message user)))
 
-(def command-pattern (re-pattern (str (:command-prefix config) #"(\S+)\s*(.+)?")))
+(def command-pattern
+  (re-pattern (str (:command-prefix config) #"(\S+)\s*(.+)?")))
 
 (defmethod handle-event :message-create
-  [_ {:keys [author content mentions] :as data}]
+  [_ {:keys [author content mentions], :as data}]
   (when (not= (:id author) @bot-id)
     (when (some #{@bot-id} (map :id mentions))
       (fluff/respond-to-bot-mention data))
     (when-let [[_ command args] (re-matches command-pattern content)]
       (handle-command (keyword command) args data))))
 
-(defn user-left-message [user]
-  (format
-   (get-in config [:messages :user-left])
-   (formatting/bold (:username user))))
+(defn user-left-message
+  [user]
+  (format (get-in config [:messages :user-left])
+          (formatting/bold (:username user))))
 
 (defmethod handle-event :guild-member-remove
   [_ {:keys [user]}]
   (pronouns/remove-empty-pronouns)
   (let [deleted (acceptance/clean-introduction-channel)]
     (when (seq deleted)
-      (messaging/create-message! (:rest @state) (get-in config [:channel-ids :introduction])
-                                 :content (user-left-message user)))))
+      (messaging/create-message! (:rest @state)
+                                 (get-in config [:channel-ids :introduction])
+                                 :content
+                                 (user-left-message user)))))
