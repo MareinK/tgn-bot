@@ -1,5 +1,6 @@
 (ns tgn-bot.pronouns
   (:require [tgn-bot.core :refer [state config]]
+            [tgn-bot.util :as util]
             [discljord.messaging :as messaging]
             [discljord.formatting :as formatting]
             [clojure.string :as str]))
@@ -24,9 +25,11 @@
 
 (defn pronoun-help-message
   []
-  (let [pronoun-roles (->> @(messaging/get-guild-roles! (:rest @state)
+  (let [roles-members (util/get-guild-members-by-role!)
+        pronoun-roles (->> @(messaging/get-guild-roles! (:rest @state)
                                                         (:guild-id config))
-                           (filter pronoun-role?))]
+                           (filter pronoun-role?)
+                           (sort-by #(-> (get roles-members (:id %)) count) #(compare %2 %1)))]
     (format (get-in config [:messages :pronouns-help])
             (str/join "\n"
                       (map #(str "- " (formatting/bold (:name %)))

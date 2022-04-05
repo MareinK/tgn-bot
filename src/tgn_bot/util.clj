@@ -1,5 +1,5 @@
 (ns tgn-bot.util
-  (:require [tgn-bot.core :refer [state]]
+  (:require [tgn-bot.core :refer [state config]]
             [discljord.messaging :as messaging]
             java-time
             [clojure.tools.logging :as log]
@@ -65,3 +65,17 @@
       (if (< r (+ (weights i) sum))
         (items i)
         (recur (inc i) (+ (weights i) sum))))))
+
+(defn get-guild-members-by-role!
+  []
+  (->>
+   @(messaging/list-guild-members! (:rest @state)
+                                   (:guild-id config)
+                                   :limit
+                                   1000)
+   (reduce
+    (fn [outer member] (reduce
+                      (fn [inner role] (update inner role #(conj % member)))
+                      outer
+                      (:roles member)))
+    {})))
