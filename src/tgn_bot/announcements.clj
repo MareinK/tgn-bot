@@ -97,4 +97,14 @@
        :embed
        {:description (bi-weekly-message events-one events-two)})))
 
-(comment (daily-event-reminder) (bi-weekly-event-reminder))
+(defn monthly-rules-reminder
+  []
+  @(messaging/create-message!
+    (:rest @state)
+    (get-in config [:channel-ids :weekly-announcements])
+    :content
+    (format (get-in config [:messages :rules-reminder])
+            (formatting/mention-channel
+             (get-in config [:channel-ids :rules])))))
+
+(comment (daily-event-reminder) (bi-weekly-event-reminder) (monthly-rules-reminder))

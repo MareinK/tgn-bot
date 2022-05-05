@@ -22,8 +22,13 @@
 
 (defn bi-weekly-tasks
   [time]
-  (log/info "Executing monthly tasks.")
+  (log/info "Executing bi-weekly tasks.")
   (announcements/bi-weekly-event-reminder))
+
+(defn monthly-tasks
+  [time]
+  (log/info "Executing monthly tasks.")
+  (announcements/monthly-rules-reminder))
 
 (defn schedule-tasks
   []
@@ -42,4 +47,8 @@
          (filter #(-> (java-time/time-between (java-time/instant 0) % :days)
                       (quot 7)
                       (even?))))
-    bi-weekly-tasks))
+    bi-weekly-tasks)
+  (chime/chime-at (->> (chime/periodic-seq standard-task-execution-time
+                                           (java-time/period 1 :months))
+                       (chime/without-past-times))
+                  monthly-tasks))

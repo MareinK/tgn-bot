@@ -18,7 +18,8 @@
             :daily-full "Vandaag vindt de activiteit %s plaats! :tada:"
             :daily-location "\nDeze activiteit vindt plaats %s."
             :bi-weekly "Hallo allemaal! De komende twee weken vinden de volgende activiteiten plaats:\n\n%s\n\nEn in de twee weken daarna kun je deze activiteiten alvast in je agenda zetten:\n\n%s\n\nJe kunt ook altijd kijken op onze [kalender](http://www.transgendernijmegen.nl/kalender/). Natuurlijk kun je hier op Discord ook vragen stellen over de activiteiten. Veel plezier! :transgender_flag:"
-            :user-left "%s heeft de server verlaten."}
+            :user-left "%s heeft de server verlaten."
+            :rules-reminder "@everyone Hallo allemaal! Op deze server gelden enkele regels, waar iedereen mee akkoord is gegaan bij het lid worden. Weet jij de regels nog allemaal? Kijk ze voor de zekerheid even na in het %s kanaal."}
  :location-regexes [{:regex "discord" :message "op Discord"}
                     {:regex "roze\\s*huis" :message "in het Roze Huis in Nijmegen"}
                     {:regex "opstand" :message "in Café De Opstand in Nijmegen"}
